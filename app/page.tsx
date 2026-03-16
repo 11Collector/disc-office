@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageSquare, Trophy, RefreshCcw, HeartPulse, Camera, Zap, ShieldAlert } from "lucide-react";
+import { 
+  MessageSquare, Trophy, RefreshCcw, HeartPulse, Camera, Zap, ShieldAlert, ArrowLeft, ArrowRight 
+} from "lucide-react"; 
 import { toPng } from "html-to-image"; 
 import { Kanit } from "next/font/google";
-import { scenarios, Choice, ChatScenario } from "../data/chatScenarios";
+import { scenarios, ChatScenario } from "../data/chatScenarios";
 
 const kanit = Kanit({ 
   subsets: ["thai", "latin"], 
@@ -51,8 +53,10 @@ const resultData = {
 export default function Home() {
   const [gameState, setGameState] = useState<"start" | "playing" | "result">("start");
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [scores, setScores] = useState({ D: 0, I: 0, S: 0, C: 0 });
-  const [shuffledChoices, setShuffledChoices] = useState<Choice[]>([]);
+  
+  // ✨ 1. เปลี่ยนมาใช้คำตอบรวมใน Array เดียว แทนการนับแยก
+  const [answers, setAnswers] = useState<("D" | "I" | "S" | "C")[]>([]);
+  
   const [activeScenarios, setActiveScenarios] = useState<ChatScenario[]>([]);
   const [gender, setGender] = useState<"ชาย" | "หญิง">("ชาย");
   const [isCapturing, setIsCapturing] = useState(false);
@@ -60,19 +64,24 @@ export default function Home() {
   const printRef = useRef<HTMLDivElement>(null);
 
   const handleStart = () => {
-    const randomTenScenarios = shuffleArray(scenarios).slice(0, 10);
+    // ✨ 2. สุ่มลำดับตัวเลือกตั้งแต่แรกเลย จะได้ไม่เปลี่ยนไปมาตอนย้อนกลับ
+    const randomTenScenarios = shuffleArray(scenarios).slice(0, 10).map(scenario => ({
+      ...scenario,
+      choices: shuffleArray(scenario.choices) 
+    }));
+    
     setActiveScenarios(randomTenScenarios);
+    setAnswers([]);
+    setCurrentIndex(0);
     setGameState("playing");
   };
 
-  useEffect(() => {
-    if (gameState === "playing" && activeScenarios.length > 0) {
-      setShuffledChoices(shuffleArray(activeScenarios[currentIndex].choices));
-    }
-  }, [currentIndex, gameState, activeScenarios]);
-
   const handleChoice = (type: "D" | "I" | "S" | "C") => {
-    setScores((prev) => ({ ...prev, [type]: prev[type] + 1 }));
+    // ✨ 3. บันทึก/อัปเดต คำตอบในตำแหน่งปัจจุบัน
+    const newAnswers = [...answers];
+    newAnswers[currentIndex] = type;
+    setAnswers(newAnswers);
+
     if (currentIndex < activeScenarios.length - 1) {
       setCurrentIndex((prev) => prev + 1);
     } else {
@@ -80,7 +89,23 @@ export default function Home() {
     }
   };
 
+  // ถอยหลัง
+  const handleBack = () => {
+    if (currentIndex > 0) setCurrentIndex((prev) => prev - 1);
+  };
+
+  // เดินหน้า (จะกดได้ก็ต่อเมื่อข้อปัจจุบันเคยตอบไปแล้ว)
+  const handleNext = () => {
+    if (currentIndex < answers.length) setCurrentIndex((prev) => prev + 1);
+  };
+
   const getFinalResult = () => {
+    // ✨ 4. นำ Array ของคำตอบมาคำนวณคะแนนรวมตอนจบ
+    const scores = { D: 0, I: 0, S: 0, C: 0 };
+    answers.forEach((ans) => {
+      if (ans) scores[ans]++;
+    });
+
     let maxType = "D";
     let maxScore = scores.D;
     (["I", "S", "C"] as const).forEach((type) => {
@@ -90,7 +115,7 @@ export default function Home() {
   };
 
   const restartGame = () => {
-    setScores({ D: 0, I: 0, S: 0, C: 0 });
+    setAnswers([]);
     setCurrentIndex(0);
     setGameState("start");
   };
@@ -100,13 +125,7 @@ export default function Home() {
     setIsCapturing(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 150));
-
-      const dataUrl = await toPng(printRef.current, {
-        cacheBust: true, 
-        pixelRatio: 2, 
-        backgroundColor: "#F8FAFC", 
-      });
-      
+      const dataUrl = await toPng(printRef.current, { cacheBust: true, pixelRatio: 2, backgroundColor: "#F8FAFC" });
       const link = document.createElement("a");
       link.download = `DISC-Office-Result.png`;
       link.href = dataUrl;
@@ -126,6 +145,7 @@ export default function Home() {
         {/* หน้าจอเริ่มต้น */}
         {gameState === "start" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col items-center p-8 bg-gradient-to-b from-slate-50 to-blue-50 overflow-y-auto">
+            {/* ... (คงเดิม) ... */}
             <div className="bg-slate-800 w-28 h-28 rounded-full flex items-center justify-center shadow-xl mt-4 mb-6 border-4 border-white">
               <MessageSquare size={50} className="text-blue-100" />
             </div>
@@ -170,6 +190,17 @@ export default function Home() {
           <div className="flex flex-col h-full bg-[#E2E8F0]">
             <div className="bg-slate-900 text-white px-3 py-2 flex items-center justify-between shadow-md z-10 shrink-0">
               <div className="flex items-center gap-2.5">
+                
+                {currentIndex > 0 && (
+                  <button 
+                    onClick={handleBack}
+                    className="p-1.5 bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 rounded-full transition-all active:scale-90"
+                    aria-label="ย้อนกลับ"
+                  >
+                    <ArrowLeft size={18} />
+                  </button>
+                )}
+
                 <div className="text-[16px] bg-slate-800 p-1.5 rounded-full w-8 h-8 flex items-center justify-center shrink-0 border border-slate-700">
                   {activeScenarios[currentIndex].avatar}
                 </div>
@@ -178,8 +209,22 @@ export default function Home() {
                   <p className="text-[10px] text-blue-300 mt-0.5 leading-none truncate">{activeScenarios[currentIndex].role}</p>
                 </div>
               </div>
-              <div className="bg-slate-800 text-blue-100 text-[10px] font-bold px-2.5 py-1 rounded-full border border-slate-700 shrink-0">
-                {currentIndex + 1} / {activeScenarios.length}
+              
+              {/* ✨ 5. ปุ่มเดินหน้า (ArrowRight) แสดงเฉพาะข้อที่ตอบไปแล้ว */}
+              <div className="flex items-center gap-2">
+                <div className="bg-slate-800 text-blue-100 text-[10px] font-bold px-2.5 py-1 rounded-full border border-slate-700 shrink-0">
+                  {currentIndex + 1} / {activeScenarios.length}
+                </div>
+                
+                {currentIndex < answers.length && (
+                  <button 
+                    onClick={handleNext}
+                    className="p-1.5 bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 rounded-full transition-all active:scale-90"
+                    aria-label="ไปข้างหน้า"
+                  >
+                    <ArrowRight size={18} />
+                  </button>
+                )}
               </div>
             </div>
 
@@ -204,18 +249,30 @@ export default function Home() {
               <div className="w-10 h-1 bg-slate-300 rounded-full mx-auto mb-3"></div>
               <p className="text-[11px] font-bold text-slate-500 text-center mb-3 tracking-wide">เลือกคำตอบสไตล์คุณ</p>
               <div className="space-y-3 max-h-[45vh] overflow-y-auto pr-1 pb-2">
-                {shuffledChoices.map((choice, index) => (
-                  <button
-                    key={`${activeScenarios[currentIndex].id}-${index}`}
-                    onClick={(e) => {
-                      e.currentTarget.blur();
-                      handleChoice(choice.type);
-                    }}
-                    className="w-full text-left bg-white hover:bg-blue-50 hover:border-blue-400 text-slate-700 p-4 rounded-2xl text-[14px] font-medium transition-all duration-200 border border-slate-200 shadow-sm hover:shadow-md active:scale-[0.98] leading-snug break-words"
-                  >
-                    {choice.text}
-                  </button>
-                ))}
+                {activeScenarios[currentIndex].choices.map((choice, index) => {
+                  
+                  // ✨ 6. ตรวจสอบว่าตัวเลือกนี้ ตรงกับที่ผู้ใช้เคยตอบไว้หรือไม่
+                  const isSelected = answers[currentIndex] === choice.type;
+
+                  return (
+                    <button
+                      key={`${activeScenarios[currentIndex].id}-${index}`}
+                      onClick={(e) => {
+                        e.currentTarget.blur();
+                        handleChoice(choice.type);
+                      }}
+                      // ✨ แก้ไข className ตรงนี้ ใช้ border-2 แทนเพื่อความสมูทและไม่มีเส้นซ้อน
+                      className={`w-full text-left p-4 rounded-2xl text-[14px] font-medium transition-all duration-200 border-2 active:scale-[0.98] leading-snug break-words
+                        ${isSelected 
+                          ? "bg-blue-50 border-blue-600 text-blue-900 shadow-sm" // สีขอบเรียบๆ คลีนๆ
+                          : "bg-white hover:bg-blue-50 text-slate-700 border-slate-100 hover:border-blue-300 shadow-sm hover:shadow-md" // ปกติ
+                        }
+                      `}
+                    >
+                      {choice.text}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -224,13 +281,11 @@ export default function Home() {
         {/* หน้าจอสรุปผล */}
         {gameState === "result" && (
           <div className="flex-1 flex flex-col bg-slate-50 relative overflow-hidden">
-            
             <div className="w-full h-full overflow-y-auto pb-40">
               <div ref={printRef} className="flex flex-col bg-slate-50 w-full relative">
                 <div className={`${resultData[getFinalResult()].color} text-white p-6 pb-12 text-center flex flex-col items-center relative shadow-md shrink-0`}>
                   <Trophy size={32} className="text-white/80 mb-1 mt-2" />
                   
-                  {/* เปลี่ยนแปลงตรงนี้: นำเพศที่เลือกมาแสดงผลให้เป็น Personalization */}
                   <p className="text-white/90 text-xs font-bold tracking-wider mb-2">
                     ฉายาของ{gender === "ชาย" ? "หนุ่ม" : "สาว"}ออฟฟิศอย่างคุณคือ
                   </p>
@@ -275,7 +330,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* ปุ่มกดลอยอยู่ด้านล่างสุด */}
             <div className="absolute bottom-0 left-0 w-full bg-white/95 backdrop-blur-md p-4 border-t border-slate-200 shadow-[0_-10px_20px_rgba(0,0,0,0.05)] flex flex-col gap-2 z-20">
               <button 
                 onClick={handleDownloadImage}
