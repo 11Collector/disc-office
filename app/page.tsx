@@ -6,7 +6,7 @@ import { MessageSquare, Trophy, ExternalLink, RefreshCcw, HeartPulse, Camera, Za
 // เปลี่ยนมาใช้ html-to-image แทน html2canvas
 import { toPng } from "html-to-image"; 
 import { Kanit } from "next/font/google";
-import { scenarios, Choice, ChatScenario } from "../data/chatScenarios";
+import { scenarios, Choice, ChatScenario } from "@/data/chatScenarios";
 
 const kanit = Kanit({ 
   subsets: ["thai", "latin"], 
