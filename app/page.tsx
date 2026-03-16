@@ -6,7 +6,7 @@ import { MessageSquare, Trophy, RefreshCcw, HeartPulse, Camera, Zap, ShieldAlert
 import { toPng } from "html-to-image"; 
 import { Kanit } from "next/font/google";
 // แก้จุดนี้: ใช้ ./ เพราะโฟลเดอร์ data อยู่ข้างๆ ไฟล์ page.tsx เลย
-import { scenarios, Choice, ChatScenario } from "@/data/chatScenarios";
+import { scenarios, Choice, ChatScenario } from "../data/chatScenarios";
 
 const kanit = Kanit({ 
   subsets: ["thai", "latin"], 
