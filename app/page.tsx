@@ -2,10 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageSquare, Trophy, RefreshCcw, HeartPulse, Camera, Zap, ShieldAlert, BarChart3 } from "lucide-react";
+import { MessageSquare, Trophy, RefreshCcw, HeartPulse, Camera, Zap, ShieldAlert } from "lucide-react";
 import { toPng } from "html-to-image"; 
 import { Kanit } from "next/font/google";
-// แก้จุดนี้: ใช้ ./ เพราะโฟลเดอร์ data อยู่ข้างๆ ไฟล์ page.tsx เลย
 import { scenarios, Choice, ChatScenario } from "../data/chatScenarios";
 
 const kanit = Kanit({ 
@@ -96,18 +95,16 @@ export default function Home() {
     setGameState("start");
   };
 
-  // อัปเกรดระบบเซฟรูปด้วย html-to-image
   const handleDownloadImage = async () => {
     if (!printRef.current) return;
     setIsCapturing(true);
     try {
-      // ให้เวลา React จัดการ DOM นิดนึงก่อนถ่ายรูป
       await new Promise((resolve) => setTimeout(resolve, 150));
 
       const dataUrl = await toPng(printRef.current, {
-        cacheBust: true, // ป้องกันรูปบั๊กจาก Cache
-        pixelRatio: 2, // ให้ภาพคมชัดระดับ HD
-        backgroundColor: "#F8FAFC", // สีพื้นหลังเผื่อส่วนที่โปร่งใส
+        cacheBust: true, 
+        pixelRatio: 2, 
+        backgroundColor: "#F8FAFC", 
       });
       
       const link = document.createElement("a");
@@ -163,7 +160,7 @@ export default function Home() {
             </div>
 
             <button onClick={handleStart} className="bg-blue-600 text-white font-bold text-xl py-4 px-12 rounded-full shadow-lg hover:bg-blue-700 transition-all hover:scale-105 active:scale-95 w-full mb-2 border-b-4 border-blue-800">
-              แกเป็นคนยังไงใน Office?
+              สแกนนิสัยเลย! 🚀
             </button>
           </motion.div>
         )}
@@ -209,8 +206,11 @@ export default function Home() {
               <div className="space-y-3 max-h-[45vh] overflow-y-auto pr-1 pb-2">
                 {shuffledChoices.map((choice, index) => (
                   <button
-                    key={index}
-                    onClick={() => handleChoice(choice.type)}
+                    key={`${activeScenarios[currentIndex].id}-${index}`}
+                    onClick={(e) => {
+                      e.currentTarget.blur();
+                      handleChoice(choice.type);
+                    }}
                     className="w-full text-left bg-white hover:bg-blue-50 hover:border-blue-400 text-slate-700 p-4 rounded-2xl text-[14px] font-medium transition-all duration-200 border border-slate-200 shadow-sm hover:shadow-md active:scale-[0.98] leading-snug break-words"
                   >
                     {choice.text}
@@ -226,13 +226,18 @@ export default function Home() {
           <div className="flex-1 flex flex-col bg-slate-50 relative overflow-hidden">
             
             <div className="w-full h-full overflow-y-auto pb-40">
-              
-              {/* พื้นที่สำหรับถ่ายภาพ (printRef) เราเอาออกมาให้โล่งๆ ไม่มีบั๊กเวลา Scroll */}
               <div ref={printRef} className="flex flex-col bg-slate-50 w-full relative">
                 <div className={`${resultData[getFinalResult()].color} text-white p-6 pb-12 text-center flex flex-col items-center relative shadow-md shrink-0`}>
                   <Trophy size={32} className="text-white/80 mb-1 mt-2" />
-                  <p className="text-white/80 text-xs font-bold tracking-wider mb-1">ฉายาประจำออฟฟิศของคุณคือ</p>
-                  <h1 className="text-2xl font-black mb-2">{resultData[getFinalResult()].rpgTitle}</h1>
+                  
+                  {/* เปลี่ยนแปลงตรงนี้: นำเพศที่เลือกมาแสดงผลให้เป็น Personalization */}
+                  <p className="text-white/90 text-xs font-bold tracking-wider mb-2">
+                    ฉายาของ{gender === "ชาย" ? "หนุ่ม" : "สาว"}ออฟฟิศอย่างคุณคือ
+                  </p>
+                  <h1 className="text-2xl font-black mb-2 flex items-center gap-2 justify-center">
+                    {gender === "ชาย" ? "👨‍💼" : "👩‍💼"} {resultData[getFinalResult()].rpgTitle}
+                  </h1>
+                  
                   <p className="text-white/90 text-[10px] bg-black/20 px-3 py-1 rounded-full">{resultData[getFinalResult()].discTitle}</p>
                   
                   <div className="absolute -bottom-8 bg-white text-5xl w-20 h-20 rounded-full flex items-center justify-center shadow-xl border-4 border-slate-50">
