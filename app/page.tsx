@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageSquare, Trophy, ExternalLink, RefreshCcw, HeartPulse, Camera, Zap, ShieldAlert } from "lucide-react";
-// เปลี่ยนมาใช้ html-to-image แทน html2canvas
+import { MessageSquare, Trophy, RefreshCcw, HeartPulse, Camera, Zap, ShieldAlert, BarChart3 } from "lucide-react";
 import { toPng } from "html-to-image"; 
 import { Kanit } from "next/font/google";
+// แก้จุดนี้: ใช้ ./ เพราะโฟลเดอร์ data อยู่ข้างๆ ไฟล์ page.tsx เลย
 import { scenarios, Choice, ChatScenario } from "@/data/chatScenarios";
 
 const kanit = Kanit({ 
