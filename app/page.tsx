@@ -277,7 +277,7 @@ export default function Home() {
                 disabled={isCapturing}
                 className="flex items-center justify-center gap-2 w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition-colors text-[14px] shadow-md disabled:bg-slate-400"
               >
-                <Camera size={18} /> {isCapturing ? "กำลังประมวลผลรูปภาพ..." : "📸 เซฟรูปเอาไปขิงเพื่อนใน Story"}
+                <Camera size={18} /> {isCapturing ? "กำลังประมวลผลรูปภาพ..." : "เซฟรูปเอาไปขิงเพื่อนใน Story"}
               </button>
               
               <div className="flex gap-2">
