@@ -1,13 +1,14 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  MessageSquare, Trophy, RefreshCcw, HeartPulse, Camera, Zap, ShieldAlert, ArrowLeft, ArrowRight 
+  MessageSquare, Trophy, RefreshCcw, HeartPulse, Camera, Zap, ShieldAlert, ArrowLeft, ArrowRight, Loader2, AlertTriangle, Info, X 
 } from "lucide-react"; 
 import { toPng } from "html-to-image"; 
 import { Kanit } from "next/font/google";
-import { scenarios, ChatScenario } from "../data/chatScenarios";
+import { scenarios, ChatScenario } from "../data/chatScenarios"; 
 
 const kanit = Kanit({ 
   subsets: ["thai", "latin"], 
@@ -23,89 +24,110 @@ const shuffleArray = (array: any[]) => {
   return shuffled;
 };
 
+// ตัด Emoji และ RPG Title เดิมออกนิดหน่อย เพื่อให้เราไปประกอบคำได้ยืดหยุ่นขึ้น
 const resultData = {
   D: {
-    rpgTitle: "เดอะแบกสายบวก 🚀", discTitle: "มนุษย์กลุ่ม D (Dominance)", color: "bg-red-600", emoji: "🚀",
+    rpgTitle: "เดอะแบกสายบวก", discTitle: "มนุษย์กลุ่ม D (Dominance)", color: "bg-red-600", barColor: "bg-red-500", emoji: "🚀",
     desc: "คุณคือเครื่องจักรปั่นงาน! ชอบความท้าทาย ตัดสินใจไว เด็ดขาด มั่นใจสูง งานด่วนงานไฟไหม้ขอให้บอก พร้อมบวกเสมอไม่ว่าหน้าไหน!",
+    warning: "ระวังหัวร้อนจนเผลอวีน หรือเร่งงานเพื่อนในทีมจนหายใจไม่ทัน ใจร่มๆ บ้างนะลูกพี่!",
     bestPartner: { name: "Type C - มนุษย์ Checklist 🧐", desc: "เพื่อนซี้สายซัพ! C จะช่วยอุดรูรั่วหลังบ้าน ให้คุณพุ่งชนเป้าหมายได้เต็มที่" },
     kryptonite: { name: "Type D - เดอะแบกสายบวก 🚀", desc: "เสือสองตัวอยู่ถ้ำเดียวกันไม่ได้! พร้อมบวกแย่งกันเป็นผู้นำตลอดเวลา" }
   },
   I: {
-    rpgTitle: "รมต. กระทรวงเอนเตอร์เทน 💃", discTitle: "มนุษย์กลุ่ม I (Influence)", color: "bg-orange-500", emoji: "💃",
+    rpgTitle: "รมต. เอนเตอร์เทน", discTitle: "มนุษย์กลุ่ม I (Influence)", color: "bg-orange-500", barColor: "bg-orange-400", emoji: "💃",
     desc: "คุณคือสีสันของแผนก! มนุษย์โลกสวย ชอบเข้าสังคม สร้างบรรยากาศดีๆ ใครอยู่ใกล้ก็อารมณ์ดี เรื่องงานอาจจะชิว แต่เรื่องปาร์ตี้เราจริงจัง!",
+    warning: "รับปากเก่งจนงานล้นมือ ดีเทลตกหล่นบ่อยเพราะมัวแต่เมาท์เพลิน โฟกัสหน่อยนะคุณน้า!",
     bestPartner: { name: "Type S - กาวใจประจำออฟฟิศ 🛡️", desc: "ผู้ฟังที่ดี! S จะคอยซัพพอร์ตไอเดียฟุ้งๆ และฟังเรื่องเมาท์ของคุณได้ทั้งวัน" },
     kryptonite: { name: "Type C - มนุษย์ Checklist 🧐", desc: "คู่ปรับสายเป๊ะ! C ถามหาแต่ตัวเลขและแผนงาน ซึ่งคุณเกลียดงานเอกสารสุดๆ" }
   },
   S: {
-    rpgTitle: "กาวใจประจำออฟฟิศ 🛡️", discTitle: "มนุษย์กลุ่ม S (Steadiness)", color: "bg-emerald-600", emoji: "🛡️",
+    rpgTitle: "กาวใจประจำออฟฟิศ", discTitle: "มนุษย์กลุ่ม S (Steadiness)", color: "bg-emerald-600", barColor: "bg-emerald-500", emoji: "🛡️",
     desc: "คุณคือเซฟโซนของทุกคน! ใจเย็น เป็นผู้ฟังที่ดี ใครมีปัญหาอะไรก็ชอบมาปรึกษา เน้นประนีประนอม รักสงบ เกลียดการเปลี่ยนแปลงกะทันหันสุดๆ",
+    warning: "ขี้เกรงใจเกินร้อย ยอมแบกงานคนอื่นไว้เองหมดจนตัวเองหลังหัก หัดเซย์โนบ้างนะ!",
     bestPartner: { name: "Type I - รมต. เอนเตอร์เทน 💃", desc: "คนเติมไฟ! I จะช่วยดึงคุณออกจากเซฟโซนมาสนุกกับชีวิตออฟฟิศมากขึ้น" },
     kryptonite: { name: "Type D - เดอะแบกสายบวก 🚀", desc: "ตัวทำลายความสงบ! D ชอบสั่งงานด่วนๆ แรงๆ ขัดกับสไตล์คุณที่ชอบทำเป็นสเต็ป" }
   },
   C: {
-    rpgTitle: "มนุษย์ Checklist 🧐", discTitle: "มนุษย์กลุ่ม C (Compliance)", color: "bg-blue-600", emoji: "🧐",
+    rpgTitle: "มนุษย์ Checklist", discTitle: "มนุษย์กลุ่ม C (Compliance)", color: "bg-blue-600", barColor: "bg-blue-500", emoji: "🧐",
     desc: "คุณคือเครื่องจับผิด! สายวิเคราะห์ รอบคอบ มีแผนเสมอ ทุกอย่างต้องมี Reference ผิดมิลลิเมตรเดียวก็ไม่ได้ เจ้าระเบียบยืนหนึ่ง!",
+    warning: "ยึดติดความเป๊ะจนลืมดูเวลา มัวแต่จัดหน้ากระดาษและแก้ฟอนต์จนเกือบตกเดดไลน์!",
     bestPartner: { name: "Type D - เดอะแบกสายบวก 🚀", desc: "คู่หูทำยอด! คุณวางแผนเป๊ะๆ ให้ ส่วน D จะเป็นคนฟาดฟันเอาผลลัพธ์มาเอง" },
     kryptonite: { name: "Type I - รมต. เอนเตอร์เทน 💃", desc: "น่ารำคาญใจ! I ทำงานปุบปับ ไร้แบบแผน เปลี่ยนใจบ่อยจนแผนคุณพังหมด" }
   },
 };
 
+type GenderType = "หนุ่ม" | "สาว" | "ตัวมัม" | "ชาว";
+
 export default function Home() {
-  const [gameState, setGameState] = useState<"start" | "playing" | "result">("start");
+  const [gameState, setGameState] = useState<"start" | "playing" | "loading" | "result">("start");
   const [currentIndex, setCurrentIndex] = useState(0);
-  
-  // ✨ 1. เปลี่ยนมาใช้คำตอบรวมใน Array เดียว แทนการนับแยก
   const [answers, setAnswers] = useState<("D" | "I" | "S" | "C")[]>([]);
-  
   const [activeScenarios, setActiveScenarios] = useState<ChatScenario[]>([]);
-  const [gender, setGender] = useState<"ชาย" | "หญิง">("ชาย");
+  const [gender, setGender] = useState<GenderType | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [showDiscInfo, setShowDiscInfo] = useState(false);
+  const [showPercentageInfo, setShowPercentageInfo] = useState(false);
+  const [selectedDiscType, setSelectedDiscType] = useState<"D" | "I" | "S" | "C" | null>(null);
 
   const printRef = useRef<HTMLDivElement>(null);
 
+  const TOTAL_QUESTIONS = 15; // อัปเดตเป็น 15 คำถาม
+
   const handleStart = () => {
-    // ✨ 2. สุ่มลำดับตัวเลือกตั้งแต่แรกเลย จะได้ไม่เปลี่ยนไปมาตอนย้อนกลับ
-    const randomTenScenarios = shuffleArray(scenarios).slice(0, 10).map(scenario => ({
+    if (!gender) {
+      alert("เลือกสไตล์พนักงานของคุณก่อนนะ!");
+      return;
+    }
+    const randomScenarios = shuffleArray(scenarios).slice(0, TOTAL_QUESTIONS).map(scenario => ({
       ...scenario,
       choices: shuffleArray(scenario.choices) 
     }));
     
-    setActiveScenarios(randomTenScenarios);
+    setActiveScenarios(randomScenarios);
     setAnswers([]);
     setCurrentIndex(0);
     setGameState("playing");
   };
 
   const handleChoice = (type: "D" | "I" | "S" | "C") => {
-    // ✨ 3. บันทึก/อัปเดต คำตอบในตำแหน่งปัจจุบัน
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+
     const newAnswers = [...answers];
     newAnswers[currentIndex] = type;
     setAnswers(newAnswers);
 
-    if (currentIndex < activeScenarios.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
-    } else {
-      setGameState("result");
-    }
+    setTimeout(() => {
+      if (currentIndex < activeScenarios.length - 1) {
+        setCurrentIndex((prev) => prev + 1);
+        setIsTransitioning(false);
+      } else {
+        setGameState("loading");
+        setTimeout(() => {
+          setGameState("result");
+          setIsTransitioning(false);
+        }, 2000);
+      }
+    }, 400);
   };
 
-  // ถอยหลัง
   const handleBack = () => {
-    if (currentIndex > 0) setCurrentIndex((prev) => prev - 1);
+    if (currentIndex > 0 && !isTransitioning) setCurrentIndex((prev) => prev - 1);
   };
 
-  // เดินหน้า (จะกดได้ก็ต่อเมื่อข้อปัจจุบันเคยตอบไปแล้ว)
   const handleNext = () => {
-    if (currentIndex < answers.length) setCurrentIndex((prev) => prev + 1);
+    if (currentIndex < answers.length && !isTransitioning) setCurrentIndex((prev) => prev + 1);
+  };
+
+  const getScores = () => {
+    const scores = { D: 0, I: 0, S: 0, C: 0 };
+    answers.forEach((ans) => { if (ans) scores[ans]++; });
+    return scores;
   };
 
   const getFinalResult = () => {
-    // ✨ 4. นำ Array ของคำตอบมาคำนวณคะแนนรวมตอนจบ
-    const scores = { D: 0, I: 0, S: 0, C: 0 };
-    answers.forEach((ans) => {
-      if (ans) scores[ans]++;
-    });
-
+    const scores = getScores();
     let maxType = "D";
     let maxScore = scores.D;
     (["I", "S", "C"] as const).forEach((type) => {
@@ -114,9 +136,33 @@ export default function Home() {
     return maxType as "D" | "I" | "S" | "C";
   };
 
+  const getPercentages = () => {
+    const scores = getScores();
+    const total = answers.length || 1; 
+    return {
+      D: Math.round((scores.D / total) * 100),
+      I: Math.round((scores.I / total) * 100),
+      S: Math.round((scores.S / total) * 100),
+      C: Math.round((scores.C / total) * 100),
+    };
+  };
+
+  // ประกอบชื่อฉายาตามเพศที่เลือก
+  const getDynamicTitle = () => {
+    const finalResult = getFinalResult();
+    const baseTitle = resultData[finalResult].rpgTitle;
+    const emoji = resultData[finalResult].emoji;
+
+    if (gender === "หนุ่ม") return `หนุ่มออฟฟิศ${baseTitle} ${emoji}`;
+    if (gender === "สาว") return `สาวออฟฟิศ${baseTitle} ${emoji}`;
+    if (gender === "ตัวมัม") return `ตัวมัม${baseTitle} ${emoji}`;
+    return `ชาวออฟฟิศ${baseTitle} ${emoji}`;
+  };
+
   const restartGame = () => {
     setAnswers([]);
     setCurrentIndex(0);
+    setGender(null);
     setGameState("start");
   };
 
@@ -138,91 +184,182 @@ export default function Home() {
     }
   };
 
+  const genderOptions: { id: GenderType; label: string; emoji: string }[] = [
+    { id: "หนุ่ม", label: "หนุ่ม", emoji: "👨" },
+    { id: "สาว", label: "สาว", emoji: "👩" },
+    { id: "ตัวมัม", label: "ตัวมัม", emoji: "🏳️‍🌈" },
+    { id: "ชาว", label: "ไม่ระบุ", emoji: "👤" },
+  ];
+
   return (
     <div className={`min-h-[100dvh] bg-slate-900 flex flex-col items-center justify-center sm:p-4 ${kanit.className}`}>
-      <div className="w-full max-w-md bg-white sm:rounded-[2.5rem] shadow-2xl overflow-hidden h-[100dvh] sm:h-[850px] sm:max-h-[90vh] flex flex-col relative sm:border-[6px] sm:border-slate-700">
+      <div className={`w-full max-w-md sm:rounded-[2.5rem] shadow-2xl overflow-hidden h-[100dvh] sm:h-[850px] sm:max-h-[90vh] flex flex-col relative sm:border-[6px] sm:border-slate-700 ${gameState === 'playing' ? 'bg-slate-900' : 'bg-white'}`}>
         
-        {/* หน้าจอเริ่มต้น */}
+        {/* ================= 1. หน้าจอเริ่มต้น ================= */}
         {gameState === "start" && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col items-center p-8 bg-gradient-to-b from-slate-50 to-blue-50 overflow-y-auto">
-            {/* ... (คงเดิม) ... */}
-            <div className="bg-slate-800 w-28 h-28 rounded-full flex items-center justify-center shadow-xl mt-4 mb-6 border-4 border-white">
-              <MessageSquare size={50} className="text-blue-100" />
-            </div>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 w-full flex flex-col p-5 sm:p-8 bg-gradient-to-b from-slate-50 to-blue-50 overflow-y-auto">
             
-            <div className="text-center mb-6">
-              <h1 className="text-3xl font-black mb-3 text-slate-800 tracking-tight leading-tight">แกเป็นคนยังไง<br/>ใน Office ?</h1>
-              <p className="text-blue-700 font-bold bg-blue-100/70 py-1.5 px-4 rounded-full inline-block text-sm shadow-sm">(DISC ของคนรุ่นใหม่)</p>
-            </div>
-
-            <div className="w-full bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6 flex items-start gap-3">
-              <span className="text-2xl mt-1">💡</span>
-              <div>
-                <p className="font-bold text-slate-800 text-sm mb-1">กติกาการเอาตัวรอด:</p>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  กดเลือก <span className="font-bold bg-blue-100 text-blue-800 px-1 rounded">"คำตอบแรกที่แวบขึ้นมาในหัว"</span> ทันทีโดยไม่ต้องคิดเยอะ เพื่อหาธาตุแท้ของคุณ!
-                </p>
+            {/* โซนเนื้อหาด้านบน (ห้ามหด) */}
+            <div className="flex flex-col items-center justify-center shrink-0 w-full pt-2">
+              <div className="text-center mb-5">
+                <Image src="/office-personality.png" alt="แกเป็นคนยังไง ใน Office" width={400} height={200} className="mx-auto mb-4 w-full max-w-[280px] sm:max-w-[360px] h-auto object-contain" priority />
+                <button onClick={() => setShowDiscInfo(true)} className="inline-flex items-center justify-center gap-1.5 text-blue-700 font-bold bg-blue-100/70 hover:bg-blue-200 py-1.5 px-4 rounded-full text-[13px] shadow-sm transition-all active:scale-95 cursor-pointer mx-auto whitespace-nowrap">
+                  <Info size={14} /> (DISC ของคนรุ่นใหม่)
+                </button>
               </div>
-            </div>
 
-            <div className="w-full space-y-4 mb-8 mt-auto">
-              <div>
-                <label className="block text-sm font-bold text-slate-800 mb-2 text-center">คุณคือพนักงานสไตล์ไหน?</label>
-                <div className="flex gap-3">
-                  <button onClick={() => setGender("ชาย")} className={`flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${gender === "ชาย" ? "bg-slate-800 text-white shadow-md" : "bg-white text-slate-500 border-2 border-slate-200 hover:border-blue-300"}`}>
-                    👨 หนุ่มออฟฟิศ
-                  </button>
-                  <button onClick={() => setGender("หญิง")} className={`flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${gender === "หญิง" ? "bg-slate-800 text-white shadow-md" : "bg-white text-slate-500 border-2 border-slate-200 hover:border-blue-300"}`}>
-                    👩 สาวออฟฟิศ
-                  </button>
+              <div className="w-full bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-start gap-3">
+                <span className="text-2xl mt-1">💡</span>
+                <div>
+                  <p className="font-bold text-slate-800 text-sm mb-1">กติกาการเอาตัวรอด:</p>
+                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                    กดเลือก <span className="font-bold bg-blue-100 text-blue-800 px-1 rounded">"คำตอบแรกที่แวบขึ้นมาในหัว"</span> ทันทีโดยไม่ต้องคิดเยอะ เพื่อหาธาตุแท้ของคุณ!
+                  </p>
                 </div>
               </div>
             </div>
 
-            <button onClick={handleStart} className="bg-blue-600 text-white font-bold text-xl py-4 px-12 rounded-full shadow-lg hover:bg-blue-700 transition-all hover:scale-105 active:scale-95 w-full mb-2 border-b-4 border-blue-800">
-              สแกนนิสัยเลย! 🚀
-            </button>
+            {/* Spacer ช่วยดันเนื้อหาด้านล่างให้อยู่ล่างสุดแบบไม่ทำลายเลย์เอาต์ */}
+            <div className="flex-1 min-h-[24px]"></div>
+
+            {/* โซนเลือกเพศและปุ่มกด (ห้ามหด) */}
+            <div className="w-full shrink-0 flex flex-col items-center pb-2">
+              <div className="w-full mb-6">
+                <label className="block text-sm font-bold text-slate-800 mb-3 text-center">คุณคือใครใน Office?</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {genderOptions.map((opt) => (
+                    <button 
+                      key={opt.id}
+                      onClick={() => setGender(opt.id)} 
+                      className={`py-2 px-1 rounded-xl font-bold flex flex-col items-center justify-center transition-all duration-300 ${
+                        gender === opt.id 
+                        ? "bg-slate-800 text-white shadow-md border-transparent scale-105 -translate-y-1" 
+                        : "bg-white text-slate-500 border border-slate-200 hover:border-blue-300"
+                      }`}
+                    >
+                      <span className="text-[22px] mb-0.5">{opt.emoji}</span>
+                      <span className="text-[10px] leading-tight text-center">{opt.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="w-full flex flex-col items-center gap-2 mb-2">
+                <button 
+                  onClick={handleStart} 
+                  className={`bg-blue-600 text-white font-bold text-[16px] py-3 px-10 rounded-full shadow-md transition-all hover:scale-105 active:scale-95 w-[85%] border-b-[3px] border-blue-800 ${!gender ? "opacity-50 grayscale cursor-not-allowed" : "hover:bg-blue-700"}`}
+                >
+                  ตอกบัตรเข้างาน ⏱️
+                </button>
+                <span className="text-slate-400 text-[11px] font-medium tracking-wide">⏳ ใช้เวลาแค่ 1 นาทีนิดๆ ({TOTAL_QUESTIONS} คำถาม)</span>
+              </div>
+
+              {/* ✨ ย้าย Footer มาไว้ข้างในนี้ จะได้ไม่หายในจอมือถือ ✨ */}
+              <div className="text-slate-400 text-[10px] font-medium mt-3 tracking-wide text-center">
+                Created by <span className="font-bold text-slate-400">อัพสกิลกับฟุ้ย</span>
+              </div>
+            </div>
+
+            {/* ✨ โค้ดป๊อปอัปอธิบาย DISC ที่เพิ่มเข้ามา ✨ */}
+            <AnimatePresence>
+              {showDiscInfo && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm"
+                  onClick={() => setShowDiscInfo(false)}
+                >
+                  <motion.div
+                    initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                    className="bg-white p-6 rounded-3xl shadow-2xl max-w-[320px] w-full border border-slate-100"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <h3 className="text-[16px] font-black text-slate-800">DISC คืออะไร? 🧠</h3>
+                      <button onClick={() => setShowDiscInfo(false)} className="text-slate-400 hover:text-slate-600 bg-slate-100 p-1.5 rounded-full transition-colors">
+                        <X size={16} />
+                      </button>
+                    </div>
+                    
+                    <p className="text-[12px] text-slate-600 mb-5 leading-relaxed font-medium">
+                      ทฤษฎีจิตวิทยาที่แบ่งสไตล์คนทำงานเป็น 4 แบบหลักๆ รู้ไว้ช่วยให้เราเอาตัวรอดจากเพื่อนร่วมงานได้!
+                    </p>
+                    
+                    <div className="space-y-2.5 mb-6">
+                      <div className="bg-red-50 p-2.5 rounded-xl border border-red-100 flex items-start gap-2.5">
+                        <span className="text-lg leading-none mt-0.5">🚀</span>
+                        <div>
+                          <p className="text-[12px] font-bold text-red-800">D (Dominance)</p>
+                          <p className="text-[10px] text-red-600 leading-tight">สายลุย มุ่งเป้าหมาย ตัดสินใจไว เด็ดขาด</p>
+                        </div>
+                      </div>
+                      <div className="bg-orange-50 p-2.5 rounded-xl border border-orange-100 flex items-start gap-2.5">
+                        <span className="text-lg leading-none mt-0.5">💃</span>
+                        <div>
+                          <p className="text-[12px] font-bold text-orange-800">I (Influence)</p>
+                          <p className="text-[10px] text-orange-600 leading-tight">สายปาร์ตี้ ช่างพูดคุย ไอเดียฟุ้งกระจาย</p>
+                        </div>
+                      </div>
+                      <div className="bg-emerald-50 p-2.5 rounded-xl border border-emerald-100 flex items-start gap-2.5">
+                        <span className="text-lg leading-none mt-0.5">🛡️</span>
+                        <div>
+                          <p className="text-[12px] font-bold text-emerald-800">S (Steadiness)</p>
+                          <p className="text-[10px] text-emerald-600 leading-tight">สายซัพพอร์ต ใจเย็น เป็นผู้ฟังที่ดี รักสงบ</p>
+                        </div>
+                      </div>
+                      <div className="bg-blue-50 p-2.5 rounded-xl border border-blue-100 flex items-start gap-2.5">
+                        <span className="text-lg leading-none mt-0.5">🧐</span>
+                        <div>
+                          <p className="text-[12px] font-bold text-blue-800">C (Compliance)</p>
+                          <p className="text-[10px] text-blue-600 leading-tight">สายเป๊ะ เจ้าระเบียบ ข้อมูลและแผนต้องแน่น</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <button
+                      onClick={() => setShowDiscInfo(false)}
+                      className="w-full bg-slate-800 text-white font-bold py-3 rounded-xl hover:bg-slate-900 active:scale-95 transition-all text-[13px] shadow-md"
+                    >
+                      อ๋อออ เข้าใจละ!
+                    </button>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            {/* ✨ สิ้นสุดโค้ดป๊อปอัป ✨ */}
           </motion.div>
         )}
 
-        {/* หน้าจอตอนเล่น (Chat Simulator) */}
+        {/* ================= 2. หน้าจอตอนเล่น (Chat Simulator) ================= */}
         {gameState === "playing" && activeScenarios.length > 0 && (
           <div className="flex flex-col h-full bg-[#E2E8F0]">
             <div className="bg-slate-900 text-white px-3 py-2 flex items-center justify-between shadow-md z-10 shrink-0">
-              <div className="flex items-center gap-2.5">
-                
+              {/* ✨ แก้ปัญหา Font ตก โดยการใช้ min-w-0 และ flex-1 ให้ตัดคำแทนการปัดบรรทัด ✨ */}
+              <div className="flex items-center gap-2.5 flex-1 min-w-0 pr-2">
                 {currentIndex > 0 && (
-                  <button 
-                    onClick={handleBack}
-                    className="p-1.5 bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 rounded-full transition-all active:scale-90"
-                    aria-label="ย้อนกลับ"
-                  >
-                    <ArrowLeft size={18} />
+                  <button onClick={handleBack} className="p-1.5 bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 rounded-full transition-all active:scale-90 shrink-0" aria-label="ย้อนกลับ">
+                    <ArrowLeft size={16} />
                   </button>
                 )}
-
-                <div className="text-[16px] bg-slate-800 p-1.5 rounded-full w-8 h-8 flex items-center justify-center shrink-0 border border-slate-700">
+                <div className="text-[15px] bg-slate-800 p-1.5 rounded-full w-8 h-8 flex items-center justify-center shrink-0 border border-slate-700">
                   {activeScenarios[currentIndex].avatar}
                 </div>
-                <div className="flex flex-col justify-center min-w-0">
-                  <h2 className="font-bold text-[14px] leading-none truncate">{activeScenarios[currentIndex].npcName}</h2>
-                  <p className="text-[10px] text-blue-300 mt-0.5 leading-none truncate">{activeScenarios[currentIndex].role}</p>
+                <div className="flex flex-col justify-center overflow-hidden flex-1">
+                  <h2 className="font-bold text-[13px] leading-tight truncate w-full">{activeScenarios[currentIndex].npcName}</h2>
+                  <p className="text-[10px] text-blue-300 leading-tight truncate w-full">{activeScenarios[currentIndex].role}</p>
                 </div>
               </div>
               
-              {/* ✨ 5. ปุ่มเดินหน้า (ArrowRight) แสดงเฉพาะข้อที่ตอบไปแล้ว */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <div className="bg-slate-800 text-blue-100 text-[10px] font-bold px-2.5 py-1 rounded-full border border-slate-700 shrink-0">
                   {currentIndex + 1} / {activeScenarios.length}
                 </div>
-                
                 {currentIndex < answers.length && (
-                  <button 
-                    onClick={handleNext}
-                    className="p-1.5 bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 rounded-full transition-all active:scale-90"
-                    aria-label="ไปข้างหน้า"
-                  >
-                    <ArrowRight size={18} />
+                  <button onClick={handleNext} className="p-1.5 bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 rounded-full transition-all active:scale-90" aria-label="ไปข้างหน้า">
+                    <ArrowRight size={16} />
                   </button>
                 )}
               </div>
@@ -240,7 +377,7 @@ export default function Home() {
                   <svg className="absolute top-0 -left-[9px] w-[10px] h-[14px] text-white drop-shadow-sm" viewBox="0 0 10 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                     <path d="M10 0H0C4.5 0 8.5 4.5 10 10V0Z" />
                   </svg>
-                  <p className="text-[15px] leading-relaxed font-medium">{activeScenarios[currentIndex].message}</p>
+                  <p className="text-[14px] leading-relaxed font-medium">{activeScenarios[currentIndex].message}</p>
                 </motion.div>
               </AnimatePresence>
             </div>
@@ -250,23 +387,23 @@ export default function Home() {
               <p className="text-[11px] font-bold text-slate-500 text-center mb-3 tracking-wide">เลือกคำตอบสไตล์คุณ</p>
               <div className="space-y-3 max-h-[45vh] overflow-y-auto pr-1 pb-2">
                 {activeScenarios[currentIndex].choices.map((choice, index) => {
-                  
-                  // ✨ 6. ตรวจสอบว่าตัวเลือกนี้ ตรงกับที่ผู้ใช้เคยตอบไว้หรือไม่
                   const isSelected = answers[currentIndex] === choice.type;
 
+                  // ✨ แก้ปัญหาไฮไลต์ล้นขอบ: ใช้กรอบชัด พื้นหลังอ่อน แทนการทำปุ่มสีทึบทั้งหมด ✨
                   return (
                     <button
                       key={`${activeScenarios[currentIndex].id}-${index}`}
+                      disabled={isTransitioning && !isSelected} 
                       onClick={(e) => {
                         e.currentTarget.blur();
                         handleChoice(choice.type);
                       }}
-                      // ✨ แก้ไข className ตรงนี้ ใช้ border-2 แทนเพื่อความสมูทและไม่มีเส้นซ้อน
-                      className={`w-full text-left p-4 rounded-2xl text-[14px] font-medium transition-all duration-200 border-2 active:scale-[0.98] leading-snug break-words
+                      className={`w-full text-left p-3.5 rounded-2xl text-[13px] font-medium transition-all duration-200 border-2 active:scale-[0.98] leading-snug break-words
                         ${isSelected 
-                          ? "bg-blue-50 border-blue-600 text-blue-900 shadow-sm" // สีขอบเรียบๆ คลีนๆ
-                          : "bg-white hover:bg-blue-50 text-slate-700 border-slate-100 hover:border-blue-300 shadow-sm hover:shadow-md" // ปกติ
+                          ? "bg-blue-50 border-blue-600 text-blue-900 shadow-sm" 
+                          : "bg-white hover:bg-blue-50 text-slate-700 border-slate-100 hover:border-blue-300 shadow-sm" 
                         }
+                        ${isTransitioning && !isSelected ? "opacity-40" : "opacity-100"}
                       `}
                     >
                       {choice.text}
@@ -278,31 +415,125 @@ export default function Home() {
           </div>
         )}
 
-        {/* หน้าจอสรุปผล */}
+        {/* ================= 3. หน้าจอ Loading คั่นกลาง ================= */}
+        {gameState === "loading" && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-900">
+            <Loader2 size={48} className="text-blue-500 animate-spin mb-6" />
+            <h2 className="text-2xl font-bold text-white mb-2 text-center">กำลังประมวลผลความตึง...</h2>
+            <p className="text-slate-400 text-sm text-center">แอบส่องพฤติกรรมคุณในออฟฟิศอยู่ แป๊บนึงนะ 🕵️‍♂️</p>
+          </motion.div>
+        )}
+
+        {/* ================= 4. หน้าจอสรุปผล ================= */}
         {gameState === "result" && (
           <div className="flex-1 flex flex-col bg-slate-50 relative overflow-hidden">
             <div className="w-full h-full overflow-y-auto pb-40">
               <div ref={printRef} className="flex flex-col bg-slate-50 w-full relative">
-                <div className={`${resultData[getFinalResult()].color} text-white p-6 pb-12 text-center flex flex-col items-center relative shadow-md shrink-0`}>
-                  <Trophy size={32} className="text-white/80 mb-1 mt-2" />
-                  
-                  <p className="text-white/90 text-xs font-bold tracking-wider mb-2">
-                    ฉายาของ{gender === "ชาย" ? "หนุ่ม" : "สาว"}ออฟฟิศอย่างคุณคือ
+                
+                {/* Header ด้านบน */}
+                <div className={`${resultData[getFinalResult()].color} text-white p-6 pb-16 text-center flex flex-col items-center relative shadow-md shrink-0`}>
+                  <Trophy size={28} className="text-white/80 mb-2 mt-2" />
+                  <p className="text-white/90 text-[11px] font-bold tracking-wider mb-2">
+                    ผลลัพธ์จากแบบทดสอบ {TOTAL_QUESTIONS} ข้อ
                   </p>
-                  <h1 className="text-2xl font-black mb-2 flex items-center gap-2 justify-center">
-                    {gender === "ชาย" ? "👨‍💼" : "👩‍💼"} {resultData[getFinalResult()].rpgTitle}
-                  </h1>
-                  
-                  <p className="text-white/90 text-[10px] bg-black/20 px-3 py-1 rounded-full">{resultData[getFinalResult()].discTitle}</p>
-                  
-                  <div className="absolute -bottom-8 bg-white text-5xl w-20 h-20 rounded-full flex items-center justify-center shadow-xl border-4 border-slate-50">
-                    {resultData[getFinalResult()].emoji}
-                  </div>
+                  <p className="text-white/90 text-[10px] bg-black/20 px-3 py-1.5 rounded-full">{resultData[getFinalResult()].discTitle}</p>
                 </div>
 
-                <div className="p-5 pt-12 flex-1 flex flex-col">
-                  <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-4 text-center">
-                    <p className="text-[14px] text-slate-700 leading-relaxed font-medium">{resultData[getFinalResult()].desc}</p>
+                {/* เนื้อหาด้านล่างที่มี Logo ตรงกลางทับไว้ */}
+                <div className="p-5 pt-12 flex-1 flex flex-col relative bg-slate-50">
+                  
+                  {/* ✨ Logo ใหญ่ตรงกลาง ✨ */}
+                  <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-white text-5xl w-24 h-24 rounded-full flex items-center justify-center shadow-xl border-[6px] border-slate-50 z-10">
+                    {resultData[getFinalResult()].emoji}
+                  </div>
+
+                  {/* กล่องบอกฉายา */}
+                  <div className="text-center mt-2 mb-4">
+                    <p className="text-slate-500 text-[11px] font-bold tracking-wider mb-1">
+                      ฉายาของคุณคือ
+                    </p>
+                    <h1 className="text-2xl font-black text-slate-800 leading-tight px-2">
+                      {getDynamicTitle()}
+                    </h1>
+                  </div>
+                  
+                  {/* กล่องบรรยายจุดเด่น */}
+                  <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-3 text-center">
+                    <p className="text-[13px] text-slate-700 leading-relaxed font-medium">{resultData[getFinalResult()].desc}</p>
+                  </div>
+
+                  {/* กล่องจุดอ่อน */}
+                  <div className="bg-amber-50 p-4 rounded-2xl shadow-sm border border-amber-200 mb-4 text-center">
+                    <p className="text-[12px] font-bold text-amber-700 mb-1.5 flex items-center justify-center gap-1.5">
+                      <AlertTriangle size={15} /> ข้อควรระวัง (จุดอ่อนของคุณ)
+                    </p>
+                    <p className="text-[12px] text-amber-900 leading-relaxed font-medium">
+                      {resultData[getFinalResult()].warning}
+                    </p>
+                  </div>
+
+                  {/* แถบพลังงานแบบหลอดเดียว (Stacked Bar) */}
+                  <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-4">
+                    <h3 className="font-bold text-slate-800 mb-4 text-sm border-b pb-2 flex items-center gap-2">
+                      <span className="text-[16px]">📊</span> ส่วนผสมความตึงของคุณ
+                    </h3>
+                    
+                    {/* หลอดเปอร์เซ็นต์รวม */}
+                    <div className="w-full h-4 bg-slate-100 rounded-full flex overflow-hidden mb-4 shadow-inner">
+                      {["D", "I", "S", "C"].map((type) => {
+                        const percent = getPercentages()[type as keyof typeof resultData];
+                        const data = resultData[type as keyof typeof resultData];
+                        
+                        if (percent === 0) return null; // ถ้าได้ 0% ไม่ต้องแสดงสีนั้น
+                        
+                        return (
+                          <motion.div 
+                            key={type}
+                            initial={{ width: 0 }}
+                            animate={{ width: `${percent}%` }}
+                            transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
+                            className={`h-full ${data.barColor} border-r border-white/20 last:border-0`} 
+                          />
+                        );
+                      })}
+                    </div>
+
+                    {/* คำอธิบายสี (Legend) */}
+                    <div className="flex justify-center flex-wrap gap-x-4 gap-y-3 px-2">
+                      {["D", "I", "S", "C"].map((type) => {
+                        const percent = getPercentages()[type as keyof typeof resultData];
+                        const data = resultData[type as keyof typeof resultData];
+                        const descriptions: Record<string, string> = {
+                          D: "สายลุย มุ่งเป้าหมาย ตัดสินใจไว เด็ดขาด",
+                          I: "สายปาร์ตี้ ช่างพูดคุย ไอเดียฟุ้งกระจาย",
+                          S: "สายซัพพอร์ต ใจเย็น เป็นผู้ฟังที่ดี รักสงบ",
+                          C: "สายเป๊ะ เจ้าระเบียบ ข้อมูลและแผนต้องแน่น"
+                        };
+                        
+                        return (
+                          <div key={type} className="flex items-center gap-1.5 group relative">
+                            <span className={`w-3 h-3 rounded-full ${data.barColor} shadow-sm`}></span>
+                            <span className="text-[11px] font-bold text-slate-700">
+                              {type} <span className="text-slate-500 font-medium">{percent}%</span>
+                            </span>
+                            <button 
+                              onClick={() => setSelectedDiscType(type as "D" | "I" | "S" | "C")}
+                              className="p-0.5 text-slate-400 hover:text-slate-600 transition-colors rounded hover:bg-slate-100"
+                              title={descriptions[type]}
+                            >
+                              <Info size={13} />
+                            </button>
+                            
+                            {/* Tooltip ที่แสดงเมื่อ hover */}
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-20">
+                              <div className="bg-slate-800 text-white text-[10px] px-2 py-1.5 rounded-lg whitespace-nowrap shadow-lg">
+                                {descriptions[type]}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-4">
@@ -312,14 +543,14 @@ export default function Home() {
                     
                     <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-xl mb-2">
                       <p className="text-[11px] font-bold text-emerald-700 mb-1 flex items-center gap-1"><Zap size={14}/> คู่หูแบกงาน (Best Partner)</p>
-                      <p className="font-bold text-emerald-900 text-sm mb-1">{resultData[getFinalResult()].bestPartner.name}</p>
-                      <p className="text-xs text-emerald-800 leading-tight">{resultData[getFinalResult()].bestPartner.desc}</p>
+                      <p className="font-bold text-emerald-900 text-[13px] mb-0.5">{resultData[getFinalResult()].bestPartner.name}</p>
+                      <p className="text-[11px] text-emerald-800 leading-tight">{resultData[getFinalResult()].bestPartner.desc}</p>
                     </div>
 
                     <div className="bg-red-50 border border-red-200 p-3 rounded-xl">
                       <p className="text-[11px] font-bold text-red-700 mb-1 flex items-center gap-1"><ShieldAlert size={14}/> คู่กรรมทำปวดหัว (Kryptonite)</p>
-                      <p className="font-bold text-red-900 text-sm mb-1">{resultData[getFinalResult()].kryptonite.name}</p>
-                      <p className="text-xs text-red-800 leading-tight">{resultData[getFinalResult()].kryptonite.desc}</p>
+                      <p className="font-bold text-red-900 text-[13px] mb-0.5">{resultData[getFinalResult()].kryptonite.name}</p>
+                      <p className="text-[11px] text-red-800 leading-tight">{resultData[getFinalResult()].kryptonite.desc}</p>
                     </div>
                   </div>
 
@@ -340,10 +571,10 @@ export default function Home() {
               </button>
               
               <div className="flex gap-2">
-                <a href="https://wheel-of-life-upskill.vercel.app" target="_blank" rel="noreferrer" className="flex-1 bg-slate-800 text-white font-bold py-3 rounded-xl text-center text-xs flex items-center justify-center gap-1 hover:bg-slate-900">
+                <a href="https://wheel-of-life-upskill.vercel.app" target="_blank" rel="noreferrer" className="flex-1 bg-slate-800 text-white font-bold py-3 rounded-xl text-center text-[11px] flex items-center justify-center gap-1 hover:bg-slate-900">
                   <HeartPulse size={14} /> สแกนสมดุลชีวิต
                 </a>
-                <button onClick={restartGame} className="flex-1 bg-slate-200 text-slate-700 font-bold py-3 rounded-xl text-center text-xs flex items-center justify-center gap-1 hover:bg-slate-300">
+                <button onClick={restartGame} className="flex-1 bg-slate-200 text-slate-700 font-bold py-3 rounded-xl text-center text-[11px] flex items-center justify-center gap-1 hover:bg-slate-300">
                   <RefreshCcw size={14} /> เล่นใหม่อีกครั้ง
                 </button>
               </div>
@@ -353,7 +584,7 @@ export default function Home() {
         )}
       </div>
 
-      <div className="text-slate-400 text-xs font-medium mt-6 tracking-wide sm:block hidden">
+      <div className="text-slate-400 text-[11px] font-medium mt-6 tracking-wide sm:block hidden">
         Created by <span className="font-bold text-slate-300">อัพสกิลกับฟุ้ย</span>
       </div>
     </div>
