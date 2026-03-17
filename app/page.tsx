@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react"; // ✨ เพิ่ม useEffect ตรงนี้
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   MessageSquare, Trophy, RefreshCcw, Star, Camera, Zap, ShieldAlert, ArrowLeft, ArrowRight, Loader2, AlertTriangle, Info, X 
@@ -9,6 +9,10 @@ import {
 import { toPng } from "html-to-image"; 
 import { Kanit } from "next/font/google";
 import { scenarios, ChatScenario } from "../data/chatScenarios"; 
+
+// ✨ นำเข้า Firebase และ Firestore (ปรับ path ตามที่คุณสร้างไฟล์ไว้)
+import { db } from "./lib/firebase"; 
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 const kanit = Kanit({ 
   subsets: ["thai", "latin"], 
@@ -71,6 +75,9 @@ export default function Home() {
   const [showPercentageInfo, setShowPercentageInfo] = useState(false);
   const [selectedDiscType, setSelectedDiscType] = useState<"D" | "I" | "S" | "C" | null>(null);
 
+  // ✨ เพิ่ม State สำหรับเช็คว่าเซฟข้อมูลไปแล้วหรือยัง ป้องกันการยิงเบิ้ล
+  const [hasSavedData, setHasSavedData] = useState(false);
+
   const printRef = useRef<HTMLDivElement>(null);
 
   const TOTAL_QUESTIONS = 15; // อัปเดตเป็น 15 คำถาม
@@ -92,6 +99,7 @@ export default function Home() {
     setActiveScenarios(randomScenarios);
     setAnswers([]);
     setCurrentIndex(0);
+    setHasSavedData(false); // ✨ รีเซ็ต state เวลาเริ่มเล่นใหม่
     setGameState("playing");
   };
 
@@ -164,11 +172,50 @@ export default function Home() {
     return `ชาวออฟฟิศ${baseTitle} ${emoji}`;
   };
 
+  // ✨ 1. สร้างฟังก์ชันบันทึกข้อมูล
+  const saveResultToFirebase = async () => {
+    // ป้องกันการยิงซ้ำถ้าเคยเซฟไปแล้ว
+    if (hasSavedData) return;
+    
+    try {
+      setHasSavedData(true); // เซ็ตไว้เลยว่ากำลังเซฟ จะได้ไม่ยิงเบิ้ล
+
+      const finalResult = getFinalResult();
+      const percentages = getPercentages();
+      
+      // บันทึกลง Collection ชื่อ "discResults"
+      await addDoc(collection(db, "discResults"), {
+        nickname: nickname,
+        gender: gender,
+        finalResult: finalResult,
+        percentages: percentages,
+        title: getDynamicTitle(),
+        answers: answers,
+        createdAt: serverTimestamp()
+      });
+      
+      console.log("บันทึกข้อมูลลง Firebase สำเร็จ!");
+    } catch (error) {
+      console.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล: ", error);
+      // ถ้า error ให้รีเซ็ตสถานะกลับเผื่ออยากให้ลองใหม่ แต่ปกติปล่อยข้ามไปได้
+      setHasSavedData(false);
+    }
+  };
+
+  // ✨ 2. ใช้ useEffect เพื่อดักจับตอนเปิดหน้า Result
+  useEffect(() => {
+    if (gameState === "result") {
+      saveResultToFirebase();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameState]); // ทำงานเมื่อ gameState เปลี่ยน
+
   const restartGame = () => {
     setAnswers([]);
     setCurrentIndex(0);
     setGender(null);
     setNickname("");
+    setHasSavedData(false); // ✨ รีเซ็ต state ก่อนเริ่มใหม่
     setGameState("start");
   };
 
@@ -198,6 +245,7 @@ export default function Home() {
   ];
 
   return (
+    // โค้ด HTML ด้านล่างคงเดิมทั้งหมดครับ ...
     <div className={`min-h-[100dvh] bg-slate-900 flex flex-col items-center justify-center sm:p-4 ${kanit.className}`}>
       <div className={`w-full max-w-md sm:rounded-[2.5rem] shadow-2xl overflow-hidden h-[100dvh] sm:h-[850px] sm:max-h-[90vh] flex flex-col relative sm:border-[6px] sm:border-slate-700 ${gameState === 'playing' ? 'bg-slate-900' : 'bg-white'}`}>
         
