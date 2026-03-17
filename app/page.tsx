@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  MessageSquare, Trophy, RefreshCcw, HeartPulse, Camera, Zap, ShieldAlert, ArrowLeft, ArrowRight, Loader2, AlertTriangle, Info, X 
+  MessageSquare, Trophy, RefreshCcw, Star, Camera, Zap, ShieldAlert, ArrowLeft, ArrowRight, Loader2, AlertTriangle, Info, X 
 } from "lucide-react"; 
 import { toPng } from "html-to-image"; 
 import { Kanit } from "next/font/google";
@@ -64,6 +64,7 @@ export default function Home() {
   const [answers, setAnswers] = useState<("D" | "I" | "S" | "C")[]>([]);
   const [activeScenarios, setActiveScenarios] = useState<ChatScenario[]>([]);
   const [gender, setGender] = useState<GenderType | null>(null);
+  const [nickname, setNickname] = useState("");
   const [isCapturing, setIsCapturing] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [showDiscInfo, setShowDiscInfo] = useState(false);
@@ -77,6 +78,10 @@ export default function Home() {
   const handleStart = () => {
     if (!gender) {
       alert("เลือกสไตล์พนักงานของคุณก่อนนะ!");
+      return;
+    }
+    if (!nickname.trim()) {
+      alert("กรอกชื่อเล่นของคุณก่อนนะ!");
       return;
     }
     const randomScenarios = shuffleArray(scenarios).slice(0, TOTAL_QUESTIONS).map(scenario => ({
@@ -163,6 +168,7 @@ export default function Home() {
     setAnswers([]);
     setCurrentIndex(0);
     setGender(null);
+    setNickname("");
     setGameState("start");
   };
 
@@ -211,7 +217,7 @@ export default function Home() {
               <div className="w-full bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-start gap-3">
                 <span className="text-2xl mt-1">💡</span>
                 <div>
-                  <p className="font-bold text-slate-800 text-sm mb-1">กติกาการเอาตัวรอด:</p>
+                  <p className="font-bold text-slate-800 text-sm mb-1">กติกาการเอาตัวรอด</p>
                   <p className="text-[11px] text-slate-600 leading-relaxed">
                     กดเลือก <span className="font-bold bg-blue-100 text-blue-800 px-1 rounded">"คำตอบแรกที่แวบขึ้นมาในหัว"</span> ทันทีโดยไม่ต้องคิดเยอะ เพื่อหาธาตุแท้ของคุณ!
                   </p>
@@ -224,6 +230,17 @@ export default function Home() {
 
             {/* โซนเลือกเพศและปุ่มกด (ห้ามหด) */}
             <div className="w-full shrink-0 flex flex-col items-center pb-2">
+              <div className="w-full mb-4">
+                <label className="block text-sm font-bold text-slate-800 mb-2 text-center">ชื่อเล่นของคุณ?</label>
+                <input
+                  type="text"
+                  placeholder="เช่น มายด์, ฝน, บอย"
+                  value={nickname}
+                  onChange={(e) => setNickname(e.target.value)}
+                  className="w-full px-4 py-2.5 text-center rounded-xl border-2 border-blue-300 focus:border-blue-600 focus:outline-none font-bold text-slate-800 text-[13px] transition-colors mb-4"
+                />
+              </div>
+
               <div className="w-full mb-6">
                 <label className="block text-sm font-bold text-slate-800 mb-3 text-center">คุณคือใครใน Office?</label>
                 <div className="grid grid-cols-4 gap-2">
@@ -247,11 +264,12 @@ export default function Home() {
               <div className="w-full flex flex-col items-center gap-2 mb-2">
                 <button 
                   onClick={handleStart} 
-                  className={`bg-blue-600 text-white font-bold text-[16px] py-3 px-10 rounded-full shadow-md transition-all hover:scale-105 active:scale-95 w-[85%] border-b-[3px] border-blue-800 ${!gender ? "opacity-50 grayscale cursor-not-allowed" : "hover:bg-blue-700"}`}
+                  disabled={!gender || !nickname.trim()}
+                  className={`bg-blue-600 text-white font-bold text-[16px] py-3 px-10 rounded-full shadow-md transition-all hover:scale-105 active:scale-95 w-[85%] border-b-[3px] border-blue-800 ${!gender || !nickname.trim() ? "opacity-50 grayscale cursor-not-allowed" : "hover:bg-blue-700"}`}
                 >
                   ตอกบัตรเข้างาน ⏱️
                 </button>
-                <span className="text-slate-400 text-[11px] font-medium tracking-wide">⏳ ใช้เวลาแค่ 1 นาทีนิดๆ ({TOTAL_QUESTIONS} คำถาม)</span>
+                <span className="text-slate-400 text-[11px] font-medium tracking-wide">⏳ ใช้เวลา 1-2 นาที ({TOTAL_QUESTIONS} คำถาม)</span>
               </div>
 
               {/* ✨ ย้าย Footer มาไว้ข้างในนี้ จะได้ไม่หายในจอมือถือ ✨ */}
@@ -259,77 +277,6 @@ export default function Home() {
                 Created by <span className="font-bold text-slate-400">อัพสกิลกับฟุ้ย</span>
               </div>
             </div>
-
-            {/* ✨ โค้ดป๊อปอัปอธิบาย DISC ที่เพิ่มเข้ามา ✨ */}
-            <AnimatePresence>
-              {showDiscInfo && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm"
-                  onClick={() => setShowDiscInfo(false)}
-                >
-                  <motion.div
-                    initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                    animate={{ scale: 1, opacity: 1, y: 0 }}
-                    exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                    className="bg-white p-6 rounded-3xl shadow-2xl max-w-[320px] w-full border border-slate-100"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="flex justify-between items-start mb-4">
-                      <h3 className="text-[16px] font-black text-slate-800">DISC คืออะไร? 🧠</h3>
-                      <button onClick={() => setShowDiscInfo(false)} className="text-slate-400 hover:text-slate-600 bg-slate-100 p-1.5 rounded-full transition-colors">
-                        <X size={16} />
-                      </button>
-                    </div>
-                    
-                    <p className="text-[12px] text-slate-600 mb-5 leading-relaxed font-medium">
-                      ทฤษฎีจิตวิทยาที่แบ่งสไตล์คนทำงานเป็น 4 แบบหลักๆ รู้ไว้ช่วยให้เราเอาตัวรอดจากเพื่อนร่วมงานได้!
-                    </p>
-                    
-                    <div className="space-y-2.5 mb-6">
-                      <div className="bg-red-50 p-2.5 rounded-xl border border-red-100 flex items-start gap-2.5">
-                        <span className="text-lg leading-none mt-0.5">🚀</span>
-                        <div>
-                          <p className="text-[12px] font-bold text-red-800">D (Dominance)</p>
-                          <p className="text-[10px] text-red-600 leading-tight">สายลุย มุ่งเป้าหมาย ตัดสินใจไว เด็ดขาด</p>
-                        </div>
-                      </div>
-                      <div className="bg-orange-50 p-2.5 rounded-xl border border-orange-100 flex items-start gap-2.5">
-                        <span className="text-lg leading-none mt-0.5">💃</span>
-                        <div>
-                          <p className="text-[12px] font-bold text-orange-800">I (Influence)</p>
-                          <p className="text-[10px] text-orange-600 leading-tight">สายปาร์ตี้ ช่างพูดคุย ไอเดียฟุ้งกระจาย</p>
-                        </div>
-                      </div>
-                      <div className="bg-emerald-50 p-2.5 rounded-xl border border-emerald-100 flex items-start gap-2.5">
-                        <span className="text-lg leading-none mt-0.5">🛡️</span>
-                        <div>
-                          <p className="text-[12px] font-bold text-emerald-800">S (Steadiness)</p>
-                          <p className="text-[10px] text-emerald-600 leading-tight">สายซัพพอร์ต ใจเย็น เป็นผู้ฟังที่ดี รักสงบ</p>
-                        </div>
-                      </div>
-                      <div className="bg-blue-50 p-2.5 rounded-xl border border-blue-100 flex items-start gap-2.5">
-                        <span className="text-lg leading-none mt-0.5">🧐</span>
-                        <div>
-                          <p className="text-[12px] font-bold text-blue-800">C (Compliance)</p>
-                          <p className="text-[10px] text-blue-600 leading-tight">สายเป๊ะ เจ้าระเบียบ ข้อมูลและแผนต้องแน่น</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <button
-                      onClick={() => setShowDiscInfo(false)}
-                      className="w-full bg-slate-800 text-white font-bold py-3 rounded-xl hover:bg-slate-900 active:scale-95 transition-all text-[13px] shadow-md"
-                    >
-                      อ๋อออ เข้าใจละ!
-                    </button>
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            {/* ✨ สิ้นสุดโค้ดป๊อปอัป ✨ */}
           </motion.div>
         )}
 
@@ -452,9 +399,12 @@ export default function Home() {
                     <p className="text-slate-500 text-[11px] font-bold tracking-wider mb-1">
                       ฉายาของคุณคือ
                     </p>
-                    <h1 className="text-2xl font-black text-slate-800 leading-tight px-2">
-                      {getDynamicTitle()}
+                    <h1 className="text-2xl font-black text-slate-800 leading-tight px-2 mb-1">
+                      {nickname}
                     </h1>
+                    <p className="text-lg font-black text-blue-600 leading-tight px-2">
+                      {getDynamicTitle()}
+                    </p>
                   </div>
                   
                   {/* กล่องบรรยายจุดเด่น */}
@@ -475,7 +425,10 @@ export default function Home() {
                   {/* แถบพลังงานแบบหลอดเดียว (Stacked Bar) */}
                   <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-4">
                     <h3 className="font-bold text-slate-800 mb-4 text-sm border-b pb-2 flex items-center gap-2">
-                      <span className="text-[16px]">📊</span> ส่วนผสมความตึงของคุณ
+                      <span className="text-[16px]">📊</span> ส่วนผสมความตึงของคุณ (DISC)
+                      <button onClick={() => setShowDiscInfo(true)} className="ml-auto p-0.5 text-slate-400 hover:text-slate-600 transition-colors rounded hover:bg-slate-100" title="ความหมายของ D/I/S/C">
+                        <Info size={16} />
+                      </button>
                     </h3>
                     
                     {/* หลอดเปอร์เซ็นต์รวม */}
@@ -503,33 +456,13 @@ export default function Home() {
                       {["D", "I", "S", "C"].map((type) => {
                         const percent = getPercentages()[type as keyof typeof resultData];
                         const data = resultData[type as keyof typeof resultData];
-                        const descriptions: Record<string, string> = {
-                          D: "สายลุย มุ่งเป้าหมาย ตัดสินใจไว เด็ดขาด",
-                          I: "สายปาร์ตี้ ช่างพูดคุย ไอเดียฟุ้งกระจาย",
-                          S: "สายซัพพอร์ต ใจเย็น เป็นผู้ฟังที่ดี รักสงบ",
-                          C: "สายเป๊ะ เจ้าระเบียบ ข้อมูลและแผนต้องแน่น"
-                        };
                         
                         return (
-                          <div key={type} className="flex items-center gap-1.5 group relative">
+                          <div key={type} className="flex items-center gap-1.5">
                             <span className={`w-3 h-3 rounded-full ${data.barColor} shadow-sm`}></span>
                             <span className="text-[11px] font-bold text-slate-700">
                               {type} <span className="text-slate-500 font-medium">{percent}%</span>
                             </span>
-                            <button 
-                              onClick={() => setSelectedDiscType(type as "D" | "I" | "S" | "C")}
-                              className="p-0.5 text-slate-400 hover:text-slate-600 transition-colors rounded hover:bg-slate-100"
-                              title={descriptions[type]}
-                            >
-                              <Info size={13} />
-                            </button>
-                            
-                            {/* Tooltip ที่แสดงเมื่อ hover */}
-                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-20">
-                              <div className="bg-slate-800 text-white text-[10px] px-2 py-1.5 rounded-lg whitespace-nowrap shadow-lg">
-                                {descriptions[type]}
-                              </div>
-                            </div>
                           </div>
                         );
                       })}
@@ -561,6 +494,54 @@ export default function Home() {
               </div>
             </div>
 
+            {/* ✨ Modal อธิบาย DISC Type ✨ */}
+            <AnimatePresence>
+              {selectedDiscType && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm"
+                  onClick={() => setSelectedDiscType(null)}
+                >
+                  <motion.div
+                    initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                    className="bg-white p-6 rounded-3xl shadow-2xl max-w-[320px] w-full border border-slate-100"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <p className="text-[12px] font-bold text-slate-500 mb-1">รายละเอียด</p>
+                        <h3 className="text-[18px] font-black text-slate-800">{selectedDiscType} - {resultData[selectedDiscType].discTitle}</h3>
+                      </div>
+                      <button onClick={() => setSelectedDiscType(null)} className="text-slate-400 hover:text-slate-600 bg-slate-100 p-1.5 rounded-full transition-colors">
+                        <X size={16} />
+                      </button>
+                    </div>
+                    
+                    <p className="text-[13px] text-slate-600 mb-4 leading-relaxed font-medium">
+                      {resultData[selectedDiscType].desc}
+                    </p>
+                    
+                    <div className="bg-amber-50 border border-amber-200 p-3 rounded-xl mb-4">
+                      <p className="text-[11px] font-bold text-amber-700 mb-2">⚠️ ข้อควรระวัง</p>
+                      <p className="text-[11px] text-amber-800 leading-tight">{resultData[selectedDiscType].warning}</p>
+                    </div>
+                    
+                    <button
+                      onClick={() => setSelectedDiscType(null)}
+                      className="w-full bg-slate-800 text-white font-bold py-3 rounded-xl hover:bg-slate-900 active:scale-95 transition-all text-[13px] shadow-md"
+                    >
+                      เข้าใจละ!
+                    </button>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            {/* ✨ สิ้นสุดโค้ดป๊อปอัป ✨ */}
+
             <div className="absolute bottom-0 left-0 w-full bg-white/95 backdrop-blur-md p-4 border-t border-slate-200 shadow-[0_-10px_20px_rgba(0,0,0,0.05)] flex flex-col gap-2 z-20">
               <button 
                 onClick={handleDownloadImage}
@@ -571,8 +552,8 @@ export default function Home() {
               </button>
               
               <div className="flex gap-2">
-                <a href="https://wheel-of-life-upskill.vercel.app" target="_blank" rel="noreferrer" className="flex-1 bg-slate-800 text-white font-bold py-3 rounded-xl text-center text-[11px] flex items-center justify-center gap-1 hover:bg-slate-900">
-                  <HeartPulse size={14} /> สแกนสมดุลชีวิต
+                <a href="https://linktr.ee/upskillwithfuii" target="_blank" rel="noreferrer" className="flex-1 bg-slate-800 text-white font-bold py-3 rounded-xl text-center text-[11px] flex items-center justify-center gap-1 hover:bg-slate-900">
+                  <Star size={14} /> ติดตามอัพสกิลกับฟุ้ย
                 </a>
                 <button onClick={restartGame} className="flex-1 bg-slate-200 text-slate-700 font-bold py-3 rounded-xl text-center text-[11px] flex items-center justify-center gap-1 hover:bg-slate-300">
                   <RefreshCcw size={14} /> เล่นใหม่อีกครั้ง
@@ -587,6 +568,77 @@ export default function Home() {
       <div className="text-slate-400 text-[11px] font-medium mt-6 tracking-wide sm:block hidden">
         Created by <span className="font-bold text-slate-300">อัพสกิลกับฟุ้ย</span>
       </div>
+
+      {/* ✨ Global DISC Info Modal (แสดงได้ทั้ง start กับ result page) ✨ */}
+      <AnimatePresence>
+        {showDiscInfo && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm"
+            onClick={() => setShowDiscInfo(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white p-6 rounded-3xl shadow-2xl max-w-[320px] w-full border border-slate-100"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-[16px] font-black text-slate-800">DISC คืออะไร? 🧠</h3>
+                <button onClick={() => setShowDiscInfo(false)} className="text-slate-400 hover:text-slate-600 bg-slate-100 p-1.5 rounded-full transition-colors">
+                  <X size={16} />
+                </button>
+              </div>
+              
+              <p className="text-[12px] text-slate-600 mb-5 leading-relaxed font-medium">
+                ทฤษฎีจิตวิทยาที่แบ่งสไตล์คนทำงานเป็น 4 แบบหลักๆ รู้ไว้ช่วยให้เราเอาตัวรอดจากเพื่อนร่วมงานได้!
+              </p>
+              
+              <div className="space-y-2.5 mb-6">
+                <div className="bg-red-50 p-2.5 rounded-xl border border-red-100 flex items-start gap-2.5">
+                  <span className="text-lg leading-none mt-0.5">🚀</span>
+                  <div>
+                    <p className="text-[12px] font-bold text-red-800">D (Dominance)</p>
+                    <p className="text-[10px] text-red-600 leading-tight">สายลุย มุ่งเป้าหมาย ตัดสินใจไว เด็ดขาด</p>
+                  </div>
+                </div>
+                <div className="bg-orange-50 p-2.5 rounded-xl border border-orange-100 flex items-start gap-2.5">
+                  <span className="text-lg leading-none mt-0.5">💃</span>
+                  <div>
+                    <p className="text-[12px] font-bold text-orange-800">I (Influence)</p>
+                    <p className="text-[10px] text-orange-600 leading-tight">สายปาร์ตี้ ช่างพูดคุย ไอเดียฟุ้งกระจาย</p>
+                  </div>
+                </div>
+                <div className="bg-emerald-50 p-2.5 rounded-xl border border-emerald-100 flex items-start gap-2.5">
+                  <span className="text-lg leading-none mt-0.5">🛡️</span>
+                  <div>
+                    <p className="text-[12px] font-bold text-emerald-800">S (Steadiness)</p>
+                    <p className="text-[10px] text-emerald-600 leading-tight">สายซัพพอร์ต ใจเย็น เป็นผู้ฟังที่ดี รักสงบ</p>
+                  </div>
+                </div>
+                <div className="bg-blue-50 p-2.5 rounded-xl border border-blue-100 flex items-start gap-2.5">
+                  <span className="text-lg leading-none mt-0.5">🧐</span>
+                  <div>
+                    <p className="text-[12px] font-bold text-blue-800">C (Compliance)</p>
+                    <p className="text-[10px] text-blue-600 leading-tight">สายเป๊ะ เจ้าระเบียบ ข้อมูลและแผนต้องแน่น</p>
+                  </div>
+                </div>
+              </div>
+              
+              <button
+                onClick={() => setShowDiscInfo(false)}
+                className="w-full bg-slate-800 text-white font-bold py-3 rounded-xl hover:bg-slate-900 active:scale-95 transition-all text-[13px] shadow-md"
+              >
+                อ๋อออ เข้าใจละ!
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* ✨ สิ้นสุด Global DISC Info Modal ✨ */}
     </div>
   );
 }

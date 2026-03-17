@@ -22,7 +22,7 @@ export default function RootLayout({
   return (
     <html lang="th">
       {/* ฝังฟอนต์ Kanit ลงไปใน Body ของทั้งเว็บไซต์ */}
-      <body className={kanit.className}>{children}</body>
+      <body className={`${kanit.className} text-base`}>{children}</body>
     </html>
   );
 }
