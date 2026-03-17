@@ -10,7 +10,7 @@ const kanit = Kanit({
 
 export const metadata: Metadata = {
   // แก้บรรทัดนี้ครับ 👇
-  title: "Who are you ? (DISC)", 
+  title: "Who are you ?", 
   description: "แบบทดสอบทายใจ สไตล์พนักงานออฟฟิศ", 
 };
 
