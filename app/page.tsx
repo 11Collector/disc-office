@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useRef, useEffect } from "react"; // ✨ เพิ่ม useEffect ตรงนี้
+import { useState, useRef, useEffect } from "react"; 
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   MessageSquare, Trophy, RefreshCcw, Star, Camera, Zap, ShieldAlert, ArrowLeft, ArrowRight, Loader2, AlertTriangle, Info, X 
@@ -10,8 +10,7 @@ import { toPng } from "html-to-image";
 import { Kanit } from "next/font/google";
 import { scenarios, ChatScenario } from "../data/chatScenarios"; 
 
-// ✨ นำเข้า Firebase และ Firestore (ปรับ path ตามที่คุณสร้างไฟล์ไว้)
-import { db } from "./lib/firebase"; 
+import { db } from "../app/lib/firebase"; 
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 const kanit = Kanit({ 
@@ -28,36 +27,44 @@ const shuffleArray = (array: any[]) => {
   return shuffled;
 };
 
-// ตัด Emoji และ RPG Title เดิมออกนิดหน่อย เพื่อให้เราไปประกอบคำได้ยืดหยุ่นขึ้น
+// ✨ 1. เพิ่ม properties `type` เข้าไปใน bestPartner และ kryptonite 
 const resultData = {
   D: {
     rpgTitle: "เดอะแบกสายบวก", discTitle: "มนุษย์กลุ่ม D (Dominance)", color: "bg-red-600", barColor: "bg-red-500", emoji: "🚀",
     desc: "คุณคือเครื่องจักรปั่นงาน! ชอบความท้าทาย ตัดสินใจไว เด็ดขาด มั่นใจสูง งานด่วนงานไฟไหม้ขอให้บอก พร้อมบวกเสมอไม่ว่าหน้าไหน!",
     warning: "ระวังหัวร้อนจนเผลอวีน หรือเร่งงานเพื่อนในทีมจนหายใจไม่ทัน ใจร่มๆ บ้างนะลูกพี่!",
-    bestPartner: { name: "Type C - มนุษย์ Checklist 🧐", desc: "เพื่อนซี้สายซัพ! C จะช่วยอุดรูรั่วหลังบ้าน ให้คุณพุ่งชนเป้าหมายได้เต็มที่" },
-    kryptonite: { name: "Type D - เดอะแบกสายบวก 🚀", desc: "เสือสองตัวอยู่ถ้ำเดียวกันไม่ได้! พร้อมบวกแย่งกันเป็นผู้นำตลอดเวลา" }
+    bestPartner: { type: "C", name: "Type C - มนุษย์ Checklist 🧐", desc: "เพื่อนซี้สายซัพ! C จะช่วยอุดรูรั่วหลังบ้าน ให้คุณพุ่งชนเป้าหมายได้เต็มที่" },
+    kryptonite: { type: "D", name: "Type D - เดอะแบกสายบวก 🚀", desc: "เสือสองตัวอยู่ถ้ำเดียวกันไม่ได้! พร้อมบวกแย่งกันเป็นผู้นำตลอดเวลา" }
   },
   I: {
     rpgTitle: "รมต. เอนเตอร์เทน", discTitle: "มนุษย์กลุ่ม I (Influence)", color: "bg-orange-500", barColor: "bg-orange-400", emoji: "💃",
     desc: "คุณคือสีสันของแผนก! มนุษย์โลกสวย ชอบเข้าสังคม สร้างบรรยากาศดีๆ ใครอยู่ใกล้ก็อารมณ์ดี เรื่องงานอาจจะชิว แต่เรื่องปาร์ตี้เราจริงจัง!",
     warning: "รับปากเก่งจนงานล้นมือ ดีเทลตกหล่นบ่อยเพราะมัวแต่เมาท์เพลิน โฟกัสหน่อยนะคุณน้า!",
-    bestPartner: { name: "Type S - กาวใจประจำออฟฟิศ 🛡️", desc: "ผู้ฟังที่ดี! S จะคอยซัพพอร์ตไอเดียฟุ้งๆ และฟังเรื่องเมาท์ของคุณได้ทั้งวัน" },
-    kryptonite: { name: "Type C - มนุษย์ Checklist 🧐", desc: "คู่ปรับสายเป๊ะ! C ถามหาแต่ตัวเลขและแผนงาน ซึ่งคุณเกลียดงานเอกสารสุดๆ" }
+    bestPartner: { type: "S", name: "Type S - กาวใจประจำออฟฟิศ 🛡️", desc: "ผู้ฟังที่ดี! S จะคอยซัพพอร์ตไอเดียฟุ้งๆ และฟังเรื่องเมาท์ของคุณได้ทั้งวัน" },
+    kryptonite: { type: "C", name: "Type C - มนุษย์ Checklist 🧐", desc: "คู่ปรับสายเป๊ะ! C ถามหาแต่ตัวเลขและแผนงาน ซึ่งคุณเกลียดงานเอกสารสุดๆ" }
   },
   S: {
     rpgTitle: "กาวใจประจำออฟฟิศ", discTitle: "มนุษย์กลุ่ม S (Steadiness)", color: "bg-emerald-600", barColor: "bg-emerald-500", emoji: "🛡️",
     desc: "คุณคือเซฟโซนของทุกคน! ใจเย็น เป็นผู้ฟังที่ดี ใครมีปัญหาอะไรก็ชอบมาปรึกษา เน้นประนีประนอม รักสงบ เกลียดการเปลี่ยนแปลงกะทันหันสุดๆ",
     warning: "ขี้เกรงใจเกินร้อย ยอมแบกงานคนอื่นไว้เองหมดจนตัวเองหลังหัก หัดเซย์โนบ้างนะ!",
-    bestPartner: { name: "Type I - รมต. เอนเตอร์เทน 💃", desc: "คนเติมไฟ! I จะช่วยดึงคุณออกจากเซฟโซนมาสนุกกับชีวิตออฟฟิศมากขึ้น" },
-    kryptonite: { name: "Type D - เดอะแบกสายบวก 🚀", desc: "ตัวทำลายความสงบ! D ชอบสั่งงานด่วนๆ แรงๆ ขัดกับสไตล์คุณที่ชอบทำเป็นสเต็ป" }
+    bestPartner: { type: "I", name: "Type I - รมต. เอนเตอร์เทน 💃", desc: "คนเติมไฟ! I จะช่วยดึงคุณออกจากเซฟโซนมาสนุกกับชีวิตออฟฟิศมากขึ้น" },
+    kryptonite: { type: "D", name: "Type D - เดอะแบกสายบวก 🚀", desc: "ตัวทำลายความสงบ! D ชอบสั่งงานด่วนๆ แรงๆ ขัดกับสไตล์คุณที่ชอบทำเป็นสเต็ป" }
   },
   C: {
     rpgTitle: "มนุษย์ Checklist", discTitle: "มนุษย์กลุ่ม C (Compliance)", color: "bg-blue-600", barColor: "bg-blue-500", emoji: "🧐",
     desc: "คุณคือเครื่องจับผิด! สายวิเคราะห์ รอบคอบ มีแผนเสมอ ทุกอย่างต้องมี Reference ผิดมิลลิเมตรเดียวก็ไม่ได้ เจ้าระเบียบยืนหนึ่ง!",
     warning: "ยึดติดความเป๊ะจนลืมดูเวลา มัวแต่จัดหน้ากระดาษและแก้ฟอนต์จนเกือบตกเดดไลน์!",
-    bestPartner: { name: "Type D - เดอะแบกสายบวก 🚀", desc: "คู่หูทำยอด! คุณวางแผนเป๊ะๆ ให้ ส่วน D จะเป็นคนฟาดฟันเอาผลลัพธ์มาเอง" },
-    kryptonite: { name: "Type I - รมต. เอนเตอร์เทน 💃", desc: "น่ารำคาญใจ! I ทำงานปุบปับ ไร้แบบแผน เปลี่ยนใจบ่อยจนแผนคุณพังหมด" }
+    bestPartner: { type: "D", name: "Type D - เดอะแบกสายบวก 🚀", desc: "คู่หูทำยอด! คุณวางแผนเป๊ะๆ ให้ ส่วน D จะเป็นคนฟาดฟันเอาผลลัพธ์มาเอง" },
+    kryptonite: { type: "I", name: "Type I - รมต. เอนเตอร์เทน 💃", desc: "น่ารำคาญใจ! I ทำงานปุบปับ ไร้แบบแผน เปลี่ยนใจบ่อยจนแผนคุณพังหมด" }
   },
+};
+
+// ✨ 2. สร้างชุดสีอ้างอิงให้แต่ละ Type
+const themeColors: Record<string, { bg: string, border: string, title: string, name: string, desc: string }> = {
+  D: { bg: "bg-red-50", border: "border-red-200", title: "text-red-700", name: "text-red-900", desc: "text-red-800" },
+  I: { bg: "bg-orange-50", border: "border-orange-200", title: "text-orange-700", name: "text-orange-900", desc: "text-orange-800" },
+  S: { bg: "bg-emerald-50", border: "border-emerald-200", title: "text-emerald-700", name: "text-emerald-900", desc: "text-emerald-800" },
+  C: { bg: "bg-blue-50", border: "border-blue-200", title: "text-blue-700", name: "text-blue-900", desc: "text-blue-800" },
 };
 
 type GenderType = "หนุ่ม" | "สาว" | "ตัวมัม" | "ชาว";
@@ -72,25 +79,16 @@ export default function Home() {
   const [isCapturing, setIsCapturing] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [showDiscInfo, setShowDiscInfo] = useState(false);
-  const [showPercentageInfo, setShowPercentageInfo] = useState(false);
   const [selectedDiscType, setSelectedDiscType] = useState<"D" | "I" | "S" | "C" | null>(null);
-
-  // ✨ เพิ่ม State สำหรับเช็คว่าเซฟข้อมูลไปแล้วหรือยัง ป้องกันการยิงเบิ้ล
   const [hasSavedData, setHasSavedData] = useState(false);
 
   const printRef = useRef<HTMLDivElement>(null);
-
-  const TOTAL_QUESTIONS = 15; // อัปเดตเป็น 15 คำถาม
+  const TOTAL_QUESTIONS = 15;
 
   const handleStart = () => {
-    if (!gender) {
-      alert("เลือกสไตล์พนักงานของคุณก่อนนะ!");
-      return;
-    }
-    if (!nickname.trim()) {
-      alert("กรอกชื่อเล่นของคุณก่อนนะ!");
-      return;
-    }
+    if (!gender) { alert("เลือกสไตล์พนักงานของคุณก่อนนะ!"); return; }
+    if (!nickname.trim()) { alert("กรอกชื่อเล่นของคุณก่อนนะ!"); return; }
+    
     const randomScenarios = shuffleArray(scenarios).slice(0, TOTAL_QUESTIONS).map(scenario => ({
       ...scenario,
       choices: shuffleArray(scenario.choices) 
@@ -99,7 +97,7 @@ export default function Home() {
     setActiveScenarios(randomScenarios);
     setAnswers([]);
     setCurrentIndex(0);
-    setHasSavedData(false); // ✨ รีเซ็ต state เวลาเริ่มเล่นใหม่
+    setHasSavedData(false);
     setGameState("playing");
   };
 
@@ -160,7 +158,6 @@ export default function Home() {
     };
   };
 
-  // ประกอบชื่อฉายาตามเพศที่เลือก
   const getDynamicTitle = () => {
     const finalResult = getFinalResult();
     const baseTitle = resultData[finalResult].rpgTitle;
@@ -172,18 +169,13 @@ export default function Home() {
     return `ชาวออฟฟิศ${baseTitle} ${emoji}`;
   };
 
-  // ✨ 1. สร้างฟังก์ชันบันทึกข้อมูล
   const saveResultToFirebase = async () => {
-    // ป้องกันการยิงซ้ำถ้าเคยเซฟไปแล้ว
     if (hasSavedData) return;
-    
     try {
-      setHasSavedData(true); // เซ็ตไว้เลยว่ากำลังเซฟ จะได้ไม่ยิงเบิ้ล
-
+      setHasSavedData(true);
       const finalResult = getFinalResult();
       const percentages = getPercentages();
       
-      // บันทึกลง Collection ชื่อ "discResults"
       await addDoc(collection(db, "discResults"), {
         nickname: nickname,
         gender: gender,
@@ -193,29 +185,26 @@ export default function Home() {
         answers: answers,
         createdAt: serverTimestamp()
       });
-      
       console.log("บันทึกข้อมูลลง Firebase สำเร็จ!");
     } catch (error) {
       console.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล: ", error);
-      // ถ้า error ให้รีเซ็ตสถานะกลับเผื่ออยากให้ลองใหม่ แต่ปกติปล่อยข้ามไปได้
       setHasSavedData(false);
     }
   };
 
-  // ✨ 2. ใช้ useEffect เพื่อดักจับตอนเปิดหน้า Result
   useEffect(() => {
     if (gameState === "result") {
       saveResultToFirebase();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameState]); // ทำงานเมื่อ gameState เปลี่ยน
+  }, [gameState]);
 
   const restartGame = () => {
     setAnswers([]);
     setCurrentIndex(0);
     setGender(null);
     setNickname("");
-    setHasSavedData(false); // ✨ รีเซ็ต state ก่อนเริ่มใหม่
+    setHasSavedData(false);
     setGameState("start");
   };
 
@@ -245,15 +234,12 @@ export default function Home() {
   ];
 
   return (
-    // โค้ด HTML ด้านล่างคงเดิมทั้งหมดครับ ...
     <div className={`min-h-[100dvh] bg-slate-900 flex flex-col items-center justify-center sm:p-4 ${kanit.className}`}>
       <div className={`w-full max-w-md sm:rounded-[2.5rem] shadow-2xl overflow-hidden h-[100dvh] sm:h-[850px] sm:max-h-[90vh] flex flex-col relative sm:border-[6px] sm:border-slate-700 ${gameState === 'playing' ? 'bg-slate-900' : 'bg-white'}`}>
         
         {/* ================= 1. หน้าจอเริ่มต้น ================= */}
         {gameState === "start" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 w-full flex flex-col p-5 sm:p-8 bg-gradient-to-b from-slate-50 to-blue-50 overflow-y-auto">
-            
-            {/* โซนเนื้อหาด้านบน (ห้ามหด) */}
             <div className="flex flex-col items-center justify-center shrink-0 w-full pt-2">
               <div className="text-center mb-5">
                 <Image src="/office-personality.png" alt="แกเป็นคนยังไง ใน Office" width={400} height={200} className="mx-auto mb-4 w-full max-w-[280px] sm:max-w-[360px] h-auto object-contain" priority />
@@ -273,10 +259,8 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Spacer ช่วยดันเนื้อหาด้านล่างให้อยู่ล่างสุดแบบไม่ทำลายเลย์เอาต์ */}
             <div className="flex-1 min-h-[24px]"></div>
 
-            {/* โซนเลือกเพศและปุ่มกด (ห้ามหด) */}
             <div className="w-full shrink-0 flex flex-col items-center pb-2">
               <div className="w-full mb-4">
                 <label className="block text-sm font-bold text-slate-800 mb-2 text-center">ชื่อเล่นของคุณ?</label>
@@ -320,7 +304,6 @@ export default function Home() {
                 <span className="text-slate-400 text-[11px] font-medium tracking-wide">⏳ ใช้เวลา 1-2 นาที ({TOTAL_QUESTIONS} คำถาม)</span>
               </div>
 
-              {/* ✨ ย้าย Footer มาไว้ข้างในนี้ จะได้ไม่หายในจอมือถือ ✨ */}
               <div className="text-slate-400 text-[10px] font-medium mt-3 tracking-wide text-center">
                 Created by <span className="font-bold text-slate-400">อัพสกิลกับฟุ้ย</span>
               </div>
@@ -332,7 +315,6 @@ export default function Home() {
         {gameState === "playing" && activeScenarios.length > 0 && (
           <div className="flex flex-col h-full bg-[#E2E8F0]">
             <div className="bg-slate-900 text-white px-3 py-2 flex items-center justify-between shadow-md z-10 shrink-0">
-              {/* ✨ แก้ปัญหา Font ตก โดยการใช้ min-w-0 และ flex-1 ให้ตัดคำแทนการปัดบรรทัด ✨ */}
               <div className="flex items-center gap-2.5 flex-1 min-w-0 pr-2">
                 {currentIndex > 0 && (
                   <button onClick={handleBack} className="p-1.5 bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 rounded-full transition-all active:scale-90 shrink-0" aria-label="ย้อนกลับ">
@@ -384,7 +366,6 @@ export default function Home() {
                 {activeScenarios[currentIndex].choices.map((choice, index) => {
                   const isSelected = answers[currentIndex] === choice.type;
 
-                  // ✨ แก้ปัญหาไฮไลต์ล้นขอบ: ใช้กรอบชัด พื้นหลังอ่อน แทนการทำปุ่มสีทึบทั้งหมด ✨
                   return (
                     <button
                       key={`${activeScenarios[currentIndex].id}-${index}`}
@@ -410,7 +391,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* ================= 3. หน้าจอ Loading คั่นกลาง ================= */}
+        {/* ================= 3. หน้าจอ Loading ================= */}
         {gameState === "loading" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-900">
             <Loader2 size={48} className="text-blue-500 animate-spin mb-6" />
@@ -425,7 +406,6 @@ export default function Home() {
             <div className="w-full h-full overflow-y-auto pb-40">
               <div ref={printRef} className="flex flex-col bg-slate-50 w-full relative">
                 
-                {/* Header ด้านบน */}
                 <div className={`${resultData[getFinalResult()].color} text-white p-6 pb-16 text-center flex flex-col items-center relative shadow-md shrink-0`}>
                   <Trophy size={28} className="text-white/80 mb-2 mt-2" />
                   <p className="text-white/90 text-[11px] font-bold tracking-wider mb-2">
@@ -434,33 +414,21 @@ export default function Home() {
                   <p className="text-white/90 text-[10px] bg-black/20 px-3 py-1.5 rounded-full">{resultData[getFinalResult()].discTitle}</p>
                 </div>
 
-                {/* เนื้อหาด้านล่างที่มี Logo ตรงกลางทับไว้ */}
                 <div className="p-5 pt-12 flex-1 flex flex-col relative bg-slate-50">
-                  
-                  {/* ✨ Logo ใหญ่ตรงกลาง ✨ */}
                   <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-white text-5xl w-24 h-24 rounded-full flex items-center justify-center shadow-xl border-[6px] border-slate-50 z-10">
                     {resultData[getFinalResult()].emoji}
                   </div>
 
-                  {/* กล่องบอกฉายา */}
                   <div className="text-center mt-2 mb-4">
-                    <p className="text-slate-500 text-[11px] font-bold tracking-wider mb-1">
-                      ฉายาของคุณคือ
-                    </p>
-                    <h1 className="text-2xl font-black text-slate-800 leading-tight px-2 mb-1">
-                      {nickname}
-                    </h1>
-                    <p className="text-lg font-black text-blue-600 leading-tight px-2">
-                      {getDynamicTitle()}
-                    </p>
+                    <p className="text-slate-500 text-[11px] font-bold tracking-wider mb-1">ฉายาของคุณคือ</p>
+                    <h1 className="text-2xl font-black text-slate-800 leading-tight px-2 mb-1">{nickname}</h1>
+                    <p className="text-lg font-black text-blue-600 leading-tight px-2">{getDynamicTitle()}</p>
                   </div>
                   
-                  {/* กล่องบรรยายจุดเด่น */}
                   <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-3 text-center">
                     <p className="text-[13px] text-slate-700 leading-relaxed font-medium">{resultData[getFinalResult()].desc}</p>
                   </div>
 
-                  {/* กล่องจุดอ่อน */}
                   <div className="bg-amber-50 p-4 rounded-2xl shadow-sm border border-amber-200 mb-4 text-center">
                     <p className="text-[12px] font-bold text-amber-700 mb-1.5 flex items-center justify-center gap-1.5">
                       <AlertTriangle size={15} /> ข้อควรระวัง (จุดอ่อนของคุณ)
@@ -470,7 +438,6 @@ export default function Home() {
                     </p>
                   </div>
 
-                  {/* แถบพลังงานแบบหลอดเดียว (Stacked Bar) */}
                   <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-4">
                     <h3 className="font-bold text-slate-800 mb-4 text-sm border-b pb-2 flex items-center gap-2">
                       <span className="text-[16px]">📊</span> ส่วนผสมความตึงของคุณ (DISC)
@@ -479,14 +446,11 @@ export default function Home() {
                       </button>
                     </h3>
                     
-                    {/* หลอดเปอร์เซ็นต์รวม */}
                     <div className="w-full h-4 bg-slate-100 rounded-full flex overflow-hidden mb-4 shadow-inner">
                       {["D", "I", "S", "C"].map((type) => {
                         const percent = getPercentages()[type as keyof typeof resultData];
                         const data = resultData[type as keyof typeof resultData];
-                        
-                        if (percent === 0) return null; // ถ้าได้ 0% ไม่ต้องแสดงสีนั้น
-                        
+                        if (percent === 0) return null; 
                         return (
                           <motion.div 
                             key={type}
@@ -499,12 +463,10 @@ export default function Home() {
                       })}
                     </div>
 
-                    {/* คำอธิบายสี (Legend) */}
                     <div className="flex justify-center flex-wrap gap-x-4 gap-y-3 px-2">
                       {["D", "I", "S", "C"].map((type) => {
                         const percent = getPercentages()[type as keyof typeof resultData];
                         const data = resultData[type as keyof typeof resultData];
-                        
                         return (
                           <div key={type} className="flex items-center gap-1.5">
                             <span className={`w-3 h-3 rounded-full ${data.barColor} shadow-sm`}></span>
@@ -517,21 +479,36 @@ export default function Home() {
                     </div>
                   </div>
 
+                  {/* ✨ 3. อัปเดตส่วน "ทำงานกับใครเวิร์คสุด?" ให้ดึงสีจาก themeColors ✨ */}
                   <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-4">
                     <h3 className="font-bold text-slate-800 mb-3 text-sm border-b pb-2 flex items-center gap-2">
                       <span className="text-[16px]">🤝</span> ทำงานกับใครเวิร์คสุด?
                     </h3>
                     
-                    <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-xl mb-2">
-                      <p className="text-[11px] font-bold text-emerald-700 mb-1 flex items-center gap-1"><Zap size={14}/> คู่หูแบกงาน (Best Partner)</p>
-                      <p className="font-bold text-emerald-900 text-[13px] mb-0.5">{resultData[getFinalResult()].bestPartner.name}</p>
-                      <p className="text-[11px] text-emerald-800 leading-tight">{resultData[getFinalResult()].bestPartner.desc}</p>
+                    {/* กล่องคู่หูแบกงาน */}
+                    <div className={`${themeColors[resultData[getFinalResult()].bestPartner.type].bg} border ${themeColors[resultData[getFinalResult()].bestPartner.type].border} p-3 rounded-xl mb-2 transition-colors`}>
+                      <p className={`text-[11px] font-bold ${themeColors[resultData[getFinalResult()].bestPartner.type].title} mb-1 flex items-center gap-1`}>
+                        <Zap size={14}/> คู่หูแบกงาน (Best Partner)
+                      </p>
+                      <p className={`font-bold ${themeColors[resultData[getFinalResult()].bestPartner.type].name} text-[13px] mb-0.5`}>
+                        {resultData[getFinalResult()].bestPartner.name}
+                      </p>
+                      <p className={`text-[11px] ${themeColors[resultData[getFinalResult()].bestPartner.type].desc} leading-tight`}>
+                        {resultData[getFinalResult()].bestPartner.desc}
+                      </p>
                     </div>
 
-                    <div className="bg-red-50 border border-red-200 p-3 rounded-xl">
-                      <p className="text-[11px] font-bold text-red-700 mb-1 flex items-center gap-1"><ShieldAlert size={14}/> คู่กรรมทำปวดหัว (Kryptonite)</p>
-                      <p className="font-bold text-red-900 text-[13px] mb-0.5">{resultData[getFinalResult()].kryptonite.name}</p>
-                      <p className="text-[11px] text-red-800 leading-tight">{resultData[getFinalResult()].kryptonite.desc}</p>
+                    {/* กล่องคู่กรรมทำปวดหัว */}
+                    <div className={`${themeColors[resultData[getFinalResult()].kryptonite.type].bg} border ${themeColors[resultData[getFinalResult()].kryptonite.type].border} p-3 rounded-xl transition-colors`}>
+                      <p className={`text-[11px] font-bold ${themeColors[resultData[getFinalResult()].kryptonite.type].title} mb-1 flex items-center gap-1`}>
+                        <ShieldAlert size={14}/> คู่กรรมทำปวดหัว (Kryptonite)
+                      </p>
+                      <p className={`font-bold ${themeColors[resultData[getFinalResult()].kryptonite.type].name} text-[13px] mb-0.5`}>
+                        {resultData[getFinalResult()].kryptonite.name}
+                      </p>
+                      <p className={`text-[11px] ${themeColors[resultData[getFinalResult()].kryptonite.type].desc} leading-tight`}>
+                        {resultData[getFinalResult()].kryptonite.desc}
+                      </p>
                     </div>
                   </div>
 
@@ -542,7 +519,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* ✨ Modal อธิบาย DISC Type ✨ */}
             <AnimatePresence>
               {selectedDiscType && (
                 <motion.div
@@ -568,16 +544,13 @@ export default function Home() {
                         <X size={16} />
                       </button>
                     </div>
-                    
                     <p className="text-[13px] text-slate-600 mb-4 leading-relaxed font-medium">
                       {resultData[selectedDiscType].desc}
                     </p>
-                    
                     <div className="bg-amber-50 border border-amber-200 p-3 rounded-xl mb-4">
                       <p className="text-[11px] font-bold text-amber-700 mb-2">⚠️ ข้อควรระวัง</p>
                       <p className="text-[11px] text-amber-800 leading-tight">{resultData[selectedDiscType].warning}</p>
                     </div>
-                    
                     <button
                       onClick={() => setSelectedDiscType(null)}
                       className="w-full bg-slate-800 text-white font-bold py-3 rounded-xl hover:bg-slate-900 active:scale-95 transition-all text-[13px] shadow-md"
@@ -588,7 +561,6 @@ export default function Home() {
                 </motion.div>
               )}
             </AnimatePresence>
-            {/* ✨ สิ้นสุดโค้ดป๊อปอัป ✨ */}
 
             <div className="absolute bottom-0 left-0 w-full bg-white/95 backdrop-blur-md p-4 border-t border-slate-200 shadow-[0_-10px_20px_rgba(0,0,0,0.05)] flex flex-col gap-2 z-20">
               <button 
@@ -617,7 +589,6 @@ export default function Home() {
         Created by <span className="font-bold text-slate-300">อัพสกิลกับฟุ้ย</span>
       </div>
 
-      {/* ✨ Global DISC Info Modal (แสดงได้ทั้ง start กับ result page) ✨ */}
       <AnimatePresence>
         {showDiscInfo && (
           <motion.div
@@ -686,7 +657,6 @@ export default function Home() {
           </motion.div>
         )}
       </AnimatePresence>
-      {/* ✨ สิ้นสุด Global DISC Info Modal ✨ */}
     </div>
   );
 }
