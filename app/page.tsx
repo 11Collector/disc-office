@@ -27,10 +27,11 @@ const shuffleArray = (array: any[]) => {
   return shuffled;
 };
 
-// ✨ 1. เพิ่ม properties `type` เข้าไปใน bestPartner และ kryptonite 
+// ✨ 1. เพิ่ม properties `type` และ `titleColor` เข้าไปใน bestPartner และ kryptonite 
 const resultData = {
   D: {
     rpgTitle: "เดอะแบกสายบวก", discTitle: "มนุษย์กลุ่ม D (Dominance)", color: "bg-red-600", barColor: "bg-red-500", emoji: "🚀",
+    titleColor: "text-red-600", // ✨ เพิ่มบรรทัดนี้ (สีฉายา)
     desc: "คุณคือเครื่องจักรปั่นงาน! ชอบความท้าทาย ตัดสินใจไว เด็ดขาด มั่นใจสูง งานด่วนงานไฟไหม้ขอให้บอก พร้อมบวกเสมอไม่ว่าหน้าไหน!",
     warning: "ระวังหัวร้อนจนเผลอวีน หรือเร่งงานเพื่อนในทีมจนหายใจไม่ทัน ใจร่มๆ บ้างนะลูกพี่!",
     bestPartner: { type: "C", name: "Type C - มนุษย์ Checklist 🧐", desc: "เพื่อนซี้สายซัพ! C จะช่วยอุดรูรั่วหลังบ้าน ให้คุณพุ่งชนเป้าหมายได้เต็มที่" },
@@ -38,6 +39,7 @@ const resultData = {
   },
   I: {
     rpgTitle: "รมต. เอนเตอร์เทน", discTitle: "มนุษย์กลุ่ม I (Influence)", color: "bg-orange-500", barColor: "bg-orange-400", emoji: "💃",
+    titleColor: "text-orange-500", // ✨ เพิ่มบรรทัดนี้ (สีฉายา)
     desc: "คุณคือสีสันของแผนก! มนุษย์โลกสวย ชอบเข้าสังคม สร้างบรรยากาศดีๆ ใครอยู่ใกล้ก็อารมณ์ดี เรื่องงานอาจจะชิว แต่เรื่องปาร์ตี้เราจริงจัง!",
     warning: "รับปากเก่งจนงานล้นมือ ดีเทลตกหล่นบ่อยเพราะมัวแต่เมาท์เพลิน โฟกัสหน่อยนะคุณน้า!",
     bestPartner: { type: "S", name: "Type S - กาวใจประจำออฟฟิศ 🛡️", desc: "ผู้ฟังที่ดี! S จะคอยซัพพอร์ตไอเดียฟุ้งๆ และฟังเรื่องเมาท์ของคุณได้ทั้งวัน" },
@@ -45,6 +47,7 @@ const resultData = {
   },
   S: {
     rpgTitle: "กาวใจประจำออฟฟิศ", discTitle: "มนุษย์กลุ่ม S (Steadiness)", color: "bg-emerald-600", barColor: "bg-emerald-500", emoji: "🛡️",
+    titleColor: "text-emerald-600", // ✨ เพิ่มบรรทัดนี้ (สีฉายา)
     desc: "คุณคือเซฟโซนของทุกคน! ใจเย็น เป็นผู้ฟังที่ดี ใครมีปัญหาอะไรก็ชอบมาปรึกษา เน้นประนีประนอม รักสงบ เกลียดการเปลี่ยนแปลงกะทันหันสุดๆ",
     warning: "ขี้เกรงใจเกินร้อย ยอมแบกงานคนอื่นไว้เองหมดจนตัวเองหลังหัก หัดเซย์โนบ้างนะ!",
     bestPartner: { type: "I", name: "Type I - รมต. เอนเตอร์เทน 💃", desc: "คนเติมไฟ! I จะช่วยดึงคุณออกจากเซฟโซนมาสนุกกับชีวิตออฟฟิศมากขึ้น" },
@@ -52,6 +55,7 @@ const resultData = {
   },
   C: {
     rpgTitle: "มนุษย์ Checklist", discTitle: "มนุษย์กลุ่ม C (Compliance)", color: "bg-blue-600", barColor: "bg-blue-500", emoji: "🧐",
+    titleColor: "text-blue-600", // ✨ เพิ่มบรรทัดนี้ (สีฉายา)
     desc: "คุณคือเครื่องจับผิด! สายวิเคราะห์ รอบคอบ มีแผนเสมอ ทุกอย่างต้องมี Reference ผิดมิลลิเมตรเดียวก็ไม่ได้ เจ้าระเบียบยืนหนึ่ง!",
     warning: "ยึดติดความเป๊ะจนลืมดูเวลา มัวแต่จัดหน้ากระดาษและแก้ฟอนต์จนเกือบตกเดดไลน์!",
     bestPartner: { type: "D", name: "Type D - เดอะแบกสายบวก 🚀", desc: "คู่หูทำยอด! คุณวางแผนเป๊ะๆ ให้ ส่วน D จะเป็นคนฟาดฟันเอาผลลัพธ์มาเอง" },
@@ -419,10 +423,13 @@ export default function Home() {
                     {resultData[getFinalResult()].emoji}
                   </div>
 
-                  <div className="text-center mt-2 mb-4">
+               <div className="text-center mt-2 mb-4">
                     <p className="text-slate-500 text-[11px] font-bold tracking-wider mb-1">ฉายาของคุณคือ</p>
                     <h1 className="text-2xl font-black text-slate-800 leading-tight px-2 mb-1">{nickname}</h1>
-                    <p className="text-lg font-black text-blue-600 leading-tight px-2">{getDynamicTitle()}</p>
+                    {/* ✨ แก้ไขบรรทัดล่างนี้ เปลี่ยน text-blue-600 เป็น dynamic class */}
+                    <p className={`text-lg font-black leading-tight px-2 ${resultData[getFinalResult()].titleColor}`}>
+                      {getDynamicTitle()}
+                    </p>
                   </div>
                   
                   <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-3 text-center">
