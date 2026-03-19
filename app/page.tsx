@@ -579,7 +579,7 @@ export default function Home() {
               </button>
               
               <div className="flex gap-2">
-                <a href="https://linktr.ee/upskillwithfuii" target="_blank" rel="noreferrer" className="flex-1 bg-slate-800 text-white font-bold py-3 rounded-xl text-center text-[11px] flex items-center justify-center gap-1 hover:bg-slate-900">
+                <a href="https://lin.ee/rQawKUM" target="_blank" rel="noreferrer" className="flex-1 bg-slate-800 text-white font-bold py-3 rounded-xl text-center text-[11px] flex items-center justify-center gap-1 hover:bg-slate-900">
                   <Star size={14} /> ติดตามอัพสกิลกับฟุ้ย
                 </a>
                 <button onClick={restartGame} className="flex-1 bg-slate-200 text-slate-700 font-bold py-3 rounded-xl text-center text-[11px] flex items-center justify-center gap-1 hover:bg-slate-300">
