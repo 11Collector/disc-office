@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState, useRef, useEffect } from "react"; 
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  MessageSquare, Trophy, RefreshCcw, Star, Camera, Zap, ShieldAlert, ArrowLeft, ArrowRight, Loader2, AlertTriangle, Info, X 
+  MessageSquare, Trophy, RefreshCcw, Star, Camera, Zap, ShieldAlert, ArrowLeft, ArrowRight, Loader2, AlertTriangle, Info, X, PieChart, Users 
 } from "lucide-react"; 
 import { toPng } from "html-to-image"; 
 import { Kanit } from "next/font/google";
@@ -518,6 +518,33 @@ export default function Home() {
                       </p>
                     </div>
                   </div>
+{/* ✨ เพิ่มแบนเนอร์เช็กสมดุลชีวิตตรงนี้ (ใต้ส่วนทำงานกับใครเวิร์คสุด) ✨ */}
+            
+                    {/* เอฟเฟกต์ตกแต่งให้ดูมีมิติ */}
+                    <div className="absolute -right-4 -top-4 w-16 h-16 bg-white/20 rounded-full blur-xl"></div>
+                    <div className="absolute -left-4 -bottom-4 w-12 h-12 bg-black/10 rounded-full blur-lg"></div>
+
+                  <div className="mb-6 mt-2">
+                    {/* เส้นคั่นและข้อความ */}
+                    <div className="flex items-center justify-center gap-3 mb-3">
+                      <div className="h-[1px] bg-slate-200 w-12"></div>
+                      <p className="text-[11px] font-bold text-slate-400 tracking-wider">เครื่องมืออัปสกิลอื่นๆ</p>
+                      <div className="h-[1px] bg-slate-200 w-12"></div>
+                    </div>
+
+                    {/* ปุ่มเช็กสมดุลชีวิต */}
+                    <a 
+                      href="https://wheel-of-life-upskill.vercel.app" 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="flex items-center justify-center gap-2 w-full bg-white border border-slate-200 py-3.5 rounded-2xl shadow-sm hover:border-orange-300 hover:bg-orange-50 transition-all active:scale-95"
+                    >
+                      <PieChart size={18} className="text-orange-500" />
+                      <span className="text-[13px] font-bold text-slate-700">เช็กสมดุลชีวิต</span>
+                    </a>
+                  </div>
+                  {/* ✨ จบ: เครื่องมืออัปสกิลอื่นๆ ✨ */}
+                  {/* ✨ จบส่วนที่เพิ่ม ✨ */}
 
                   <div className="mt-2 text-center text-slate-400 text-[10px] font-bold pb-4">
                     Created by อัพสกิลกับฟุ้ย
@@ -578,12 +605,22 @@ export default function Home() {
                 <Camera size={18} /> {isCapturing ? "กำลังประมวลผลรูปภาพ..." : "เซฟรูปเอาไปขิงเพื่อนใน Story"}
               </button>
               
-              <div className="flex gap-2">
-                <a href="https://lin.ee/rQawKUM" target="_blank" rel="noreferrer" className="flex-1 bg-slate-800 text-white font-bold py-3 rounded-xl text-center text-[11px] flex items-center justify-center gap-1 hover:bg-slate-900">
-                  <Star size={14} /> ถอดรหัสผลลัพธ์ต่อ
+           <div className="flex gap-2">
+                {/* ✨ ปรับส่วนนี้: ปุ่มเขียว LINE สำหรับทักแชท ✨ */}
+                <a 
+                  href="https://lin.ee/rQawKUM" 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="flex-1 bg-[#00c300] text-white font-bold py-3 rounded-xl text-center text-[12px] flex items-center justify-center gap-1.5 hover:bg-[#00aa00] transition-colors shadow-sm"
+                >
+                  <MessageSquare size={16} /> อัปสกิลจากจุดแข็งเพิ่ม
                 </a>
-                <button onClick={restartGame} className="flex-1 bg-slate-200 text-slate-700 font-bold py-3 rounded-xl text-center text-[11px] flex items-center justify-center gap-1 hover:bg-slate-300">
-                  <RefreshCcw size={14} /> เล่นใหม่อีกครั้ง
+                
+                <button 
+                  onClick={restartGame} 
+                  className="flex-1 bg-slate-200 text-slate-700 font-bold py-3 rounded-xl text-center text-[12px] flex items-center justify-center gap-1.5 hover:bg-slate-300 transition-colors"
+                >
+                  <RefreshCcw size={16} /> เล่นใหม่อีกครั้ง
                 </button>
               </div>
             </div>
