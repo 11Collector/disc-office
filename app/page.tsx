@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState, useRef, useEffect } from "react"; 
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  MessageSquare, Trophy, RefreshCcw, Star, Camera, Zap, ShieldAlert, ArrowLeft, ArrowRight, Loader2, AlertTriangle, Info, X, PieChart, Users 
+  MessageSquare, Trophy, RefreshCcw, Star, Camera, Zap, ShieldAlert, ArrowLeft, ArrowRight, Loader2, AlertTriangle, Info, X, PieChart, Users, Wallet 
 } from "lucide-react"; 
 import { toPng } from "html-to-image"; 
 import { Kanit } from "next/font/google";
@@ -12,6 +12,7 @@ import { scenarios, ChatScenario } from "../data/chatScenarios";
 
 import { db } from "../app/lib/firebase"; 
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { Analytics } from "@vercel/analytics/next";
 
 const kanit = Kanit({ 
   subsets: ["thai", "latin"], 
@@ -524,7 +525,7 @@ export default function Home() {
                     <div className="absolute -right-4 -top-4 w-16 h-16 bg-white/20 rounded-full blur-xl"></div>
                     <div className="absolute -left-4 -bottom-4 w-12 h-12 bg-black/10 rounded-full blur-lg"></div>
 
-                  <div className="mb-6 mt-2">
+                <div className="mb-6 mt-2">
                     {/* เส้นคั่นและข้อความ */}
                     <div className="flex items-center justify-center gap-3 mb-3">
                       <div className="h-[1px] bg-slate-200 w-12"></div>
@@ -532,19 +533,34 @@ export default function Home() {
                       <div className="h-[1px] bg-slate-200 w-12"></div>
                     </div>
 
-                    {/* ปุ่มเช็กสมดุลชีวิต */}
-                    <a 
-                      href="https://wheel-of-life-upskill.vercel.app" 
-                      target="_blank" 
-                      rel="noreferrer"
-                      className="flex items-center justify-center gap-2 w-full bg-white border border-slate-200 py-3.5 rounded-2xl shadow-sm hover:border-orange-300 hover:bg-orange-50 transition-all active:scale-95"
-                    >
-                      <PieChart size={18} className="text-orange-500" />
-                      <span className="text-[13px] font-bold text-slate-700">เช็กสมดุลชีวิต</span>
-                    </a>
+                    {/* ✨ กล่อง Flex จัดให้อยู่บรรทัดเดียวกัน ✨ */}
+                    <div className="flex gap-3 w-full">
+                      
+                      {/* ปุ่มเช็กสมดุลชีวิต */}
+                      <a 
+                        href="https://wheel-of-life-upskill.vercel.app" 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="flex flex-1 items-center justify-center gap-1.5 bg-white border border-slate-200 py-3 rounded-2xl shadow-sm hover:border-orange-300 hover:bg-orange-50 transition-all active:scale-95"
+                      >
+                        <PieChart size={16} className="text-orange-500" />
+                        <span className="text-[12px] sm:text-[13px] font-bold text-slate-700">เช็กสมดุลชีวิต</span>
+                      </a>
+
+                      {/* ปุ่มถอดสไตล์การเงิน (โทนสี Amber อิงจากเหรียญทอง/ส้ม) */}
+                      <a 
+                        href="https://money-avatar.vercel.app/" 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="flex flex-1 items-center justify-center gap-1.5 bg-white border border-slate-200 py-3 rounded-2xl shadow-sm hover:border-amber-400 hover:bg-amber-50 transition-all active:scale-95"
+                      >
+                        <Wallet size={16} className="text-amber-500" />
+                        <span className="text-[12px] sm:text-[13px] font-bold text-slate-700">ถอดสไตล์การเงิน</span>
+                      </a>
+
+                    </div>
                   </div>
                   {/* ✨ จบ: เครื่องมืออัปสกิลอื่นๆ ✨ */}
-                  {/* ✨ จบส่วนที่เพิ่ม ✨ */}
 
                   <div className="mt-2 text-center text-slate-400 text-[10px] font-bold pb-4">
                     Created by อัพสกิลกับฟุ้ย
