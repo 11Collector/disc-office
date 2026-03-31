@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Kanit } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 // โหลดฟอนต์ Kanit รองรับภาษาไทย
@@ -22,7 +23,10 @@ export default function RootLayout({
   return (
     <html lang="th">
       {/* ฝังฟอนต์ Kanit ลงไปใน Body ของทั้งเว็บไซต์ */}
-      <body className={`${kanit.className} text-base`}>{children}</body>
+      <body className={`${kanit.className} text-base`}>
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
